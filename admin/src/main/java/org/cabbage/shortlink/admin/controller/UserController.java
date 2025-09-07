@@ -1,6 +1,7 @@
 package org.cabbage.shortlink.admin.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.cabbage.shortlink.admin.common.convention.result.Result;
 import org.cabbage.shortlink.admin.dto.resp.UserRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.UserService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,7 +21,11 @@ public class UserController {
      * @return user
      */
     @GetMapping("/api/shortlink/v1/user/{username}")
-    public UserRespDTO getUserByUsername(@PathVariable("username") String username) {
-        return userService.getUserByUsername(username);
+    public Result<UserRespDTO> getUserByUsername(@PathVariable("username") String username) {
+        UserRespDTO user = userService.getUserByUsername(username);
+        if (user == null) {
+            return new Result<UserRespDTO>().setCode("-1").setMessage("User not found");
+        }
+        return new Result<UserRespDTO>().setCode("0").setData(user);
     }
 }
