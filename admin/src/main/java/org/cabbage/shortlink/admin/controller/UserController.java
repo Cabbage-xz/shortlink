@@ -2,6 +2,7 @@ package org.cabbage.shortlink.admin.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.admin.common.convention.result.Result;
+import org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum;
 import org.cabbage.shortlink.admin.dto.resp.UserRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.UserService;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,8 +25,8 @@ public class UserController {
     public Result<UserRespDTO> getUserByUsername(@PathVariable("username") String username) {
         UserRespDTO user = userService.getUserByUsername(username);
         if (user == null) {
-            return new Result<UserRespDTO>().setCode("-1").setMessage("User not found");
+            return new Result<UserRespDTO>().setCode(UserErrorCodeEnum.USER_NULL.code()).setMessage(UserErrorCodeEnum.USER_NULL.message());
         }
-        return new Result<UserRespDTO>().setCode("0").setData(user);
+        return new Result<UserRespDTO>().setCode(Result.SUCCESS_CODE).setData(user);
     }
 }
