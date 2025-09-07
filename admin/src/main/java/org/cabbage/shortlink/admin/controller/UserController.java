@@ -2,6 +2,7 @@ package org.cabbage.shortlink.admin.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.admin.common.convention.result.Result;
+import org.cabbage.shortlink.admin.common.convention.result.Results;
 import org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum;
 import org.cabbage.shortlink.admin.dto.resp.UserRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.UserService;
@@ -27,6 +28,6 @@ public class UserController {
         if (user == null) {
             return new Result<UserRespDTO>().setCode(UserErrorCodeEnum.USER_NULL.code()).setMessage(UserErrorCodeEnum.USER_NULL.message());
         }
-        return new Result<UserRespDTO>().setCode(Result.SUCCESS_CODE).setData(user);
+        return Results.success(user);
     }
 }
