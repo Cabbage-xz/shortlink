@@ -1,6 +1,8 @@
 package org.cabbage.shortlink.admin.dto.resp;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
+import org.cabbage.shortlink.admin.common.serialize.PhoneDesensitizationSerializer;
 
 /**
  * @author xzcabbage
@@ -27,6 +29,7 @@ public class UserRespDTO {
     /**
      * 手机号
      */
+    @JsonSerialize(using = PhoneDesensitizationSerializer.class)
     private String phone;
 
     /**
