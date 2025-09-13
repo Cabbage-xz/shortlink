@@ -1,6 +1,7 @@
 package org.cabbage.shortlink.admin.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import org.cabbage.shortlink.admin.common.convention.exception.ClientException;
 import org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum;
@@ -31,5 +32,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         UserRespDTO userRespDTO = new UserRespDTO();
         BeanUtils.copyProperties(one, userRespDTO);
         return userRespDTO;
+    }
+
+    /**
+     * 依据用户名查询用户是否存在
+     * @param username 用户名
+     * @return True表示存在 False表示不存在
+     */
+    @Override
+    public Boolean checkUsername(String username) {
+        LambdaQueryWrapper<User> eq = Wrappers.lambdaQuery(User.class).eq(User::getUsername, username);
+        User user = getOne(eq);
+        return user != null;
     }
 }

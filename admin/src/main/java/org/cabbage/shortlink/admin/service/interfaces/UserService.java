@@ -6,5 +6,19 @@ import org.cabbage.shortlink.admin.dto.resp.UserRespDTO;
 
 public interface UserService extends IService<User> {
 
+    /**
+     * 根据用户名查询用户信息
+     *
+     * @param username 用户名
+     * @return 用户返回实体
+     */
     UserRespDTO getUserByUsername(String username);
+
+    /**
+     * 查询用户名是否存在
+     *
+     * @param username 用户名
+     * @return 存在返回True 不存在返回False
+     */
+    Boolean checkUsername(String username);
 }
