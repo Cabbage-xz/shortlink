@@ -1,5 +1,6 @@
 package org.cabbage.shortlink.admin.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -7,11 +8,15 @@ import org.cabbage.shortlink.admin.common.convention.exception.ClientException;
 import org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum;
 import org.cabbage.shortlink.admin.dao.entity.User;
 import org.cabbage.shortlink.admin.dao.mapper.UserMapper;
+import org.cabbage.shortlink.admin.dto.req.UserRegisterReqDTO;
 import org.cabbage.shortlink.admin.dto.resp.UserRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.UserService;
 import org.redisson.api.RBloomFilter;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+
+import static org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum.USER_NAME_EXIST;
+import static org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum.USER_SAVE_ERROR;
 
 /**
  * 
@@ -48,5 +53,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 //        User user = getOne(eq);
 //        return user != null;
         return userRegisterCachePenetrationBloomFilter.contains(username);
+    }
+
+    /**
+     * 注册用户
+     * @param req 注册用户请求参数
+     */
+    @Override
+    public void register(UserRegisterReqDTO req) {
+        if (checkUsername(req.getUsername())) {
+            throw new ClientException(USER_NAME_EXIST);
+        }
+        if (!save(BeanUtil.toBean(req, User.class))) {
+            throw new ClientException(USER_SAVE_ERROR);
+        }
+        userRegisterCachePenetrationBloomFilter.add(req.getUsername());
     }
 }

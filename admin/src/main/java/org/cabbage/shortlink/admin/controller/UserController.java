@@ -4,12 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.admin.common.convention.result.Result;
 import org.cabbage.shortlink.admin.common.convention.result.Results;
 import org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum;
+import org.cabbage.shortlink.admin.dto.req.UserRegisterReqDTO;
 import org.cabbage.shortlink.admin.dto.resp.UserRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.UserService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,7 +21,7 @@ public class UserController {
      * @param username 用户名
      * @return user
      */
-    @GetMapping("/api/shortlink/v1/user/{username}")
+    @GetMapping("/api/short-link/v1/user/{username}")
     public Result<UserRespDTO> getUserByUsername(@PathVariable("username") String username) {
         UserRespDTO user = userService.getUserByUsername(username);
         if (user == null) {
@@ -37,8 +35,19 @@ public class UserController {
      * @param username 用户名
      * @return True表示存在 False表示不存在
      */
-    @GetMapping("/api/shortlink/v1/user/has-username")
+    @GetMapping("/api/short-link/v1/user/has-username")
     public Result<Boolean> checkHasUsername(@RequestParam("username") String username) {
         return Results.success(userService.checkUsername(username));
+    }
+
+    /**
+     * 注册用户
+     * @param req 用户请求实体
+     * @return 注册结果
+     */
+    @RequestMapping(value = "/api/short-link/v1/user/register", method = RequestMethod.POST)
+    public Result<Void> register(@RequestBody UserRegisterReqDTO req) {
+        userService.register(req);
+        return Results.success();
     }
 }
