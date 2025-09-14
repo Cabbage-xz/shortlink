@@ -77,7 +77,7 @@ public class User implements Serializable {
     /**
      * 删除标识 0：未删除 1：已删除
      */
-    @TableField("del_flag")
+    @TableField(value = "del_flag", fill = FieldFill.INSERT)
     @TableLogic(value = "0", delval = "1")
     private Integer delFlag;
 }
