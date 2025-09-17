@@ -22,8 +22,6 @@ import static org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum.USER_NA
 import static org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum.USER_SAVE_ERROR;
 
 /**
- * 
- * 
  * @author xzcabbage
  * @since 2025/6/9
  */
@@ -48,6 +46,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     /**
      * 依据用户名查询用户是否存在
+     *
      * @param username 用户名
      * @return True表示存在 False表示不存在
      */
@@ -61,6 +60,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     /**
      * 注册用户
+     *
      * @param req 注册用户请求参数
      */
     @Override
