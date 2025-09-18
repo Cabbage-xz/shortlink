@@ -3,6 +3,7 @@ package org.cabbage.shortlink.admin.service.interfaces;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.cabbage.shortlink.admin.dao.entity.User;
 import org.cabbage.shortlink.admin.dto.req.UserRegisterReqDTO;
+import org.cabbage.shortlink.admin.dto.req.UserUpdateReqDTO;
 import org.cabbage.shortlink.admin.dto.resp.UserRespDTO;
 
 public interface UserService extends IService<User> {
@@ -29,4 +30,11 @@ public interface UserService extends IService<User> {
      * @param req 注册用户请求参数
      */
     void register(UserRegisterReqDTO req);
+
+    /**
+     * 修改用户
+     *
+     * @param req 修改用户请求参数
+     */
+    void updateInfo(UserUpdateReqDTO req);
 }

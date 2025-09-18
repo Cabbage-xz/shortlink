@@ -5,6 +5,7 @@ import org.cabbage.shortlink.admin.common.convention.result.Result;
 import org.cabbage.shortlink.admin.common.convention.result.Results;
 import org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum;
 import org.cabbage.shortlink.admin.dto.req.UserRegisterReqDTO;
+import org.cabbage.shortlink.admin.dto.req.UserUpdateReqDTO;
 import org.cabbage.shortlink.admin.dto.resp.UserRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.UserService;
 import org.springframework.web.bind.annotation.*;
@@ -48,6 +49,17 @@ public class UserController {
     @RequestMapping(value = "/api/short-link/v1/user/register", method = RequestMethod.POST)
     public Result<Void> register(@RequestBody UserRegisterReqDTO req) {
         userService.register(req);
+        return Results.success();
+    }
+
+    /**
+     * 修改用户信息
+     * @param req 用户请求实体
+     * @return 修改结果
+     */
+    @RequestMapping(value = "/api/short-link/v1/user/update", method = RequestMethod.POST)
+    public Result<Void> updateInfo(@RequestBody UserUpdateReqDTO req) {
+        userService.updateInfo(req);
         return Results.success();
     }
 }

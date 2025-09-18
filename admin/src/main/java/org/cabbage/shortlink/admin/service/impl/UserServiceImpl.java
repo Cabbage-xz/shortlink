@@ -2,6 +2,7 @@ package org.cabbage.shortlink.admin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.admin.common.convention.exception.ClientException;
@@ -9,6 +10,7 @@ import org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum;
 import org.cabbage.shortlink.admin.dao.entity.User;
 import org.cabbage.shortlink.admin.dao.mapper.UserMapper;
 import org.cabbage.shortlink.admin.dto.req.UserRegisterReqDTO;
+import org.cabbage.shortlink.admin.dto.req.UserUpdateReqDTO;
 import org.cabbage.shortlink.admin.dto.resp.UserRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.UserService;
 import org.redisson.api.RBloomFilter;
@@ -81,5 +83,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * 修改用户
+     *
+     * @param req 修改用户请求参数
+     */
+    @Override
+    public void updateInfo(UserUpdateReqDTO req) {
+        // todo 验证当前用户是否为登陆用户
+        update(BeanUtil.toBean(req, User.class),
+                new LambdaUpdateWrapper<>(User.class).eq(User::getUsername, req.getUsername()));
     }
 }
