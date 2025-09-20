@@ -1,6 +1,8 @@
 package org.cabbage.shortlink.admin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.lang.UUID;
+import com.alibaba.fastjson2.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -9,19 +11,24 @@ import org.cabbage.shortlink.admin.common.convention.exception.ClientException;
 import org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum;
 import org.cabbage.shortlink.admin.dao.entity.User;
 import org.cabbage.shortlink.admin.dao.mapper.UserMapper;
+import org.cabbage.shortlink.admin.dto.req.UserLoginReqDTO;
 import org.cabbage.shortlink.admin.dto.req.UserRegisterReqDTO;
 import org.cabbage.shortlink.admin.dto.req.UserUpdateReqDTO;
+import org.cabbage.shortlink.admin.dto.resp.UserLoginRespDTO;
 import org.cabbage.shortlink.admin.dto.resp.UserRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.UserService;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.concurrent.TimeUnit;
+
+import static org.cabbage.shortlink.admin.common.constant.RedisCacheConstant.LOCK_USER_LOGIN_KEY;
 import static org.cabbage.shortlink.admin.common.constant.RedisCacheConstant.LOCK_USER_REGISTER_KEY;
-import static org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum.USER_NAME_EXIST;
-import static org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum.USER_SAVE_ERROR;
+import static org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum.*;
 
 /**
  * @author xzcabbage
@@ -33,6 +40,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     private final RBloomFilter<String> userRegisterCachePenetrationBloomFilter;
     private final RedissonClient redissonClient;
+    private final StringRedisTemplate stringRedisTemplate;
 
     @Override
     public UserRespDTO getUserByUsername(String username) {
@@ -95,5 +103,40 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // todo 验证当前用户是否为登陆用户
         update(BeanUtil.toBean(req, User.class),
                 new LambdaUpdateWrapper<>(User.class).eq(User::getUsername, req.getUsername()));
+    }
+
+    /**
+     * 用户登录
+     *
+     * @param req 用户登录请求
+     * @return 用户登录响应实体
+     */
+    @Override
+    public UserLoginRespDTO login(UserLoginReqDTO req) {
+        User one = getOne(new LambdaQueryWrapper<User>()
+                .eq(User::getUsername, req.getUsername()));
+        if (one == null) {
+            throw new ClientException(UserErrorCodeEnum.USER_NULL);
+        } else if (!one.getPassword().equals(req.getPassword())) {
+            throw new ClientException(USER_PASSWORD_ERROR);
+        }
+        String uuid = UUID.randomUUID().toString();
+        stringRedisTemplate.opsForHash().put(LOCK_USER_LOGIN_KEY + req.getUsername(),
+                uuid, JSON.toJSONString(one));
+        stringRedisTemplate.expire(LOCK_USER_LOGIN_KEY + req.getUsername(), 30L, TimeUnit.MINUTES);
+
+        return new UserLoginRespDTO(uuid);
+    }
+
+    /**
+     * 检查是否登陆
+     *
+     * @param username 用户名
+     * @param token token值
+     * @return 是否登陆
+     */
+    @Override
+    public Boolean checkLogin(String username, String token) {
+        return stringRedisTemplate.opsForHash().hasKey(LOCK_USER_LOGIN_KEY + username, token);
     }
 }

@@ -4,8 +4,10 @@ import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.admin.common.convention.result.Result;
 import org.cabbage.shortlink.admin.common.convention.result.Results;
 import org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum;
+import org.cabbage.shortlink.admin.dto.req.UserLoginReqDTO;
 import org.cabbage.shortlink.admin.dto.req.UserRegisterReqDTO;
 import org.cabbage.shortlink.admin.dto.req.UserUpdateReqDTO;
+import org.cabbage.shortlink.admin.dto.resp.UserLoginRespDTO;
 import org.cabbage.shortlink.admin.dto.resp.UserRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.UserService;
 import org.springframework.web.bind.annotation.*;
@@ -33,6 +35,7 @@ public class UserController {
 
     /**
      * 查询用户名是否存在
+     *
      * @param username 用户名
      * @return True表示存在 False表示不存在
      */
@@ -43,6 +46,7 @@ public class UserController {
 
     /**
      * 注册用户
+     *
      * @param req 用户请求实体
      * @return 注册结果
      */
@@ -54,6 +58,7 @@ public class UserController {
 
     /**
      * 修改用户信息
+     *
      * @param req 用户请求实体
      * @return 修改结果
      */
@@ -61,5 +66,28 @@ public class UserController {
     public Result<Void> updateInfo(@RequestBody UserUpdateReqDTO req) {
         userService.updateInfo(req);
         return Results.success();
+    }
+
+    /**
+     * 用户登录
+     *
+     * @param req 登录请求
+     * @return 登陆返回实体
+     */
+    @RequestMapping(value = "/api/short-link/v1/user/login", method = RequestMethod.POST)
+    public Result<UserLoginRespDTO> login(@RequestBody UserLoginReqDTO req) {
+        return Results.success(userService.login(req));
+    }
+
+    /**
+     * 检查用户是否登陆
+     *
+     * @param username 用户名
+     * @param token token值
+     * @return 用户是否登陆
+     */
+    @RequestMapping(value = "/api/short-link/v1/user/checkLogin", method = RequestMethod.GET)
+    public Result<Boolean> checkLogin(@RequestParam("username") String username, @RequestParam("token") String token) {
+        return Results.success(userService.checkLogin(username, token));
     }
 }
