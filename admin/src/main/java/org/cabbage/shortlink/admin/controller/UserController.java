@@ -83,11 +83,26 @@ public class UserController {
      * 检查用户是否登陆
      *
      * @param username 用户名
-     * @param token token值
+     * @param token    token值
      * @return 用户是否登陆
      */
     @RequestMapping(value = "/api/short-link/v1/user/checkLogin", method = RequestMethod.GET)
     public Result<Boolean> checkLogin(@RequestParam("username") String username, @RequestParam("token") String token) {
         return Results.success(userService.checkLogin(username, token));
     }
+
+    /**
+     * 用户退出登录
+     *
+     * @param username 用户名
+     * @param token    token
+     * @return 返回退出结果
+     */
+    @RequestMapping(value = "/api/short-link/v1/user/logout", method = RequestMethod.POST)
+    public Result<Void> logout(@RequestParam("username") String username, @RequestParam("token") String token) {
+        userService.logout(username, token);
+        return Results.success();
+    }
+
+
 }

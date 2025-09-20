@@ -132,11 +132,26 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      * 检查是否登陆
      *
      * @param username 用户名
-     * @param token token值
+     * @param token    token值
      * @return 是否登陆
      */
     @Override
     public Boolean checkLogin(String username, String token) {
         return stringRedisTemplate.opsForHash().hasKey(LOCK_USER_LOGIN_KEY + username, token);
+    }
+
+    /**
+     * 用户退出登录
+     *
+     * @param username 用户名
+     * @param token    token
+     */
+    @Override
+    public void logout(String username, String token) {
+        if (checkLogin(username, token)) {
+            stringRedisTemplate.delete(LOCK_USER_LOGIN_KEY + username);
+            return;
+        }
+        throw new ClientException(USER_TOKEN_ERROR);
     }
 }
