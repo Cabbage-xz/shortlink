@@ -8,7 +8,7 @@ import lombok.Data;
  * 短链接分组请求
  */
 @Data
-public class LinkGroupReqDTO {
+public class LinkGroupAddReqDTO {
 
     /**
      * 用户分组名
