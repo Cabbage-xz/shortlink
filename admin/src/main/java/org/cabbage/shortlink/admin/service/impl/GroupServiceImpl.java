@@ -1,11 +1,15 @@
 package org.cabbage.shortlink.admin.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.cabbage.shortlink.admin.dao.entity.GroupDO;
 import org.cabbage.shortlink.admin.dao.mapper.GroupMapper;
 import org.cabbage.shortlink.admin.service.interfaces.GroupService;
+import org.cabbage.shortlink.admin.toolkit.RandomGenerator;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * @author xzcabbage
@@ -15,4 +19,29 @@ import org.springframework.stereotype.Service;
 @Slf4j
 @Service
 public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implements GroupService {
+
+
+    @Override
+    public void saveGroup(String groupName) {
+        String gid;
+        // 生成唯一gid
+        do {
+            gid = RandomGenerator.generateRandom();
+        } while (isHasGid(gid));
+        GroupDO group = GroupDO.builder().gid(gid).name(groupName).build();
+        save(group);
+    }
+
+    /**
+     * 查询gid是否已存在
+     * @param gid gid
+     * @return true->gid已存在 false表示gid未存在
+     */
+    private boolean isHasGid(String gid) {
+        List<GroupDO> list = list(new LambdaQueryWrapper<GroupDO>()
+                .eq(GroupDO::getGid, gid)
+                // todo 设置用户名
+                .eq(GroupDO::getUsername, null));
+        return list != null && !list.isEmpty();
+    }
 }

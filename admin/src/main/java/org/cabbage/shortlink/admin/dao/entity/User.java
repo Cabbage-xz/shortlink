@@ -1,9 +1,12 @@
 package org.cabbage.shortlink.admin.dao.entity;
 
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
-import com.fasterxml.jackson.annotation.JsonFormat;
-import com.baomidou.mybatisplus.annotation.*;
-import java.time.LocalDateTime;
+import org.cabbage.shortlink.admin.common.database.BaseDO;
+
 import java.io.Serializable;
 
 /**
@@ -14,7 +17,7 @@ import java.io.Serializable;
  */
 @Data
 @TableName("t_user")
-public class User implements Serializable {
+public class User extends BaseDO implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -60,24 +63,4 @@ public class User implements Serializable {
     @TableField("deletion_time")
     private Long deletionTime;
 
-    /**
-     * 创建时间
-     */
-    @TableField(value = "create_time", fill = FieldFill.INSERT)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private LocalDateTime createTime;
-
-    /**
-     * 修改时间
-     */
-    @TableField(value = "update_time", fill = FieldFill.INSERT_UPDATE)
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
-    private LocalDateTime updateTime;
-
-    /**
-     * 删除标识 0：未删除 1：已删除
-     */
-    @TableField(value = "del_flag", fill = FieldFill.INSERT)
-    @TableLogic(value = "0", delval = "1")
-    private Integer delFlag;
 }
