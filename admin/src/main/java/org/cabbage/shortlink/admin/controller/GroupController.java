@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.admin.common.convention.result.Result;
 import org.cabbage.shortlink.admin.common.convention.result.Results;
 import org.cabbage.shortlink.admin.dto.req.LinkGroupAddReqDTO;
+import org.cabbage.shortlink.admin.dto.req.LinkGroupSortReqDTO;
 import org.cabbage.shortlink.admin.dto.req.LinkGroupUpdateReqDTO;
 import org.cabbage.shortlink.admin.dto.resp.LinkGroupRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.GroupService;
@@ -64,6 +65,18 @@ public class GroupController {
     @RequestMapping(value = "/api/short-link/v1/group/delete", method = RequestMethod.POST)
     public Result<Void> deleteGroup(@RequestParam("gid") String gid) {
         groupService.deleteGroup(gid);
+        return Results.success();
+    }
+
+    /**
+     * 排序分组
+     *
+     * @param req 排序请求
+     * @return 成功
+     */
+    @RequestMapping(value = "/api/short-link/v1/group/sort", method = RequestMethod.POST)
+    public Result<Void> sortGroup(@RequestBody List<LinkGroupSortReqDTO> req) {
+        groupService.sortGroup(req);
         return Results.success();
     }
 }

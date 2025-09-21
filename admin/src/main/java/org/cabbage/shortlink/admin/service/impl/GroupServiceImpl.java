@@ -8,13 +8,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.cabbage.shortlink.admin.common.biz.user.UserContext;
 import org.cabbage.shortlink.admin.dao.entity.GroupDO;
 import org.cabbage.shortlink.admin.dao.mapper.GroupMapper;
+import org.cabbage.shortlink.admin.dto.req.LinkGroupSortReqDTO;
 import org.cabbage.shortlink.admin.dto.req.LinkGroupUpdateReqDTO;
 import org.cabbage.shortlink.admin.dto.resp.LinkGroupRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.GroupService;
 import org.cabbage.shortlink.admin.toolkit.RandomGenerator;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author xzcabbage
@@ -87,6 +91,26 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
         update(group, new LambdaUpdateWrapper<GroupDO>()
                 .eq(GroupDO::getUsername, UserContext.getUsername())
                 .eq(GroupDO::getGid, gid));
+    }
+
+    /**
+     * 排序分组
+     *
+     * @param req 排序请求
+     */
+    @Override
+    @Transactional
+    public void sortGroup(List<LinkGroupSortReqDTO> req) {
+
+        Map<String, Integer> gidToSortOrder = req.stream()
+                .collect(Collectors.toMap(LinkGroupSortReqDTO::getGid, LinkGroupSortReqDTO::getSortOrder,
+                        // 合并函数 只保留相同key出现的第一个value
+                        (existing, replacement) -> existing));
+        List<GroupDO> groupDOList = list(new LambdaQueryWrapper<GroupDO>()
+                .eq(GroupDO::getUsername, UserContext.getUsername())
+                .in(GroupDO::getGid, gidToSortOrder.keySet()));
+        groupDOList.forEach(groupDO -> groupDO.setSortOrder(gidToSortOrder.get(groupDO.getGid())));
+        updateBatchById(groupDOList);
     }
 
     /**
