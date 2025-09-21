@@ -62,9 +62,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public Boolean checkUsername(String username) {
-//        LambdaQueryWrapper<User> eq = Wrappers.lambdaQuery(User.class).eq(User::getUsername, username);
-//        User user = getOne(eq);
-//        return user != null;
         return userRegisterCachePenetrationBloomFilter.contains(username);
     }
 
@@ -119,6 +116,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new ClientException(UserErrorCodeEnum.USER_NULL);
         } else if (!one.getPassword().equals(req.getPassword())) {
             throw new ClientException(USER_PASSWORD_ERROR);
+        }
+        Boolean hasLogin = stringRedisTemplate.hasKey(LOCK_USER_LOGIN_KEY + req.getUsername());
+        if (hasLogin) {
+            throw new ClientException(USER_ALREADY_LOGIN);
         }
         String uuid = UUID.randomUUID().toString();
         stringRedisTemplate.opsForHash().put(LOCK_USER_LOGIN_KEY + req.getUsername(),

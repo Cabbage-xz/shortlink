@@ -2,10 +2,13 @@ package org.cabbage.shortlink.admin.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.extern.slf4j.Slf4j;
+import org.cabbage.shortlink.admin.common.biz.user.UserContext;
 import org.cabbage.shortlink.admin.dao.entity.GroupDO;
 import org.cabbage.shortlink.admin.dao.mapper.GroupMapper;
+import org.cabbage.shortlink.admin.dto.req.LinkGroupUpdateReqDTO;
 import org.cabbage.shortlink.admin.dto.resp.LinkGroupRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.GroupService;
 import org.cabbage.shortlink.admin.toolkit.RandomGenerator;
@@ -35,7 +38,12 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
         do {
             gid = RandomGenerator.generateRandom();
         } while (isHasGid(gid));
-        GroupDO group = GroupDO.builder().gid(gid).sortOrder(0).name(groupName).build();
+        GroupDO group = GroupDO.builder()
+                .gid(gid)
+                .username(UserContext.getUsername())
+                .sortOrder(0)
+                .name(groupName)
+                .build();
         save(group);
     }
 
@@ -48,10 +56,22 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
     public List<LinkGroupRespDTO> queryGroup() {
         // todo 获取用户名
         List<GroupDO> list = list(new LambdaQueryWrapper<GroupDO>()
-                .isNull(GroupDO::getUsername)
+                .eq(GroupDO::getUsername, UserContext.getUsername())
                 .orderByDesc(List.of(GroupDO::getSortOrder, GroupDO::getUpdateTime)));
         return BeanUtil.copyToList(list, LinkGroupRespDTO.class);
 
+    }
+
+    /**
+     * 修改分组名
+     * @param req 修改请求参数
+     */
+    @Override
+    public void updateGroupName(LinkGroupUpdateReqDTO req) {
+        GroupDO group = GroupDO.builder().name(req.getName()).build();
+        update(group, new LambdaUpdateWrapper<GroupDO>()
+                .eq(GroupDO::getUsername, UserContext.getUsername())
+                .eq(GroupDO::getGid, req.getGid()));
     }
 
     /**
@@ -64,7 +84,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
         List<GroupDO> list = list(new LambdaQueryWrapper<GroupDO>()
                 .eq(GroupDO::getGid, gid)
                 // todo 设置用户名
-                .eq(GroupDO::getUsername, null));
+                .eq(GroupDO::getUsername, UserContext.getUsername()));
         return list != null && !list.isEmpty();
     }
 }

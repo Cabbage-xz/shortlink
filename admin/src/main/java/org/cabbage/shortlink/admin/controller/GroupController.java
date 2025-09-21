@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.admin.common.convention.result.Result;
 import org.cabbage.shortlink.admin.common.convention.result.Results;
 import org.cabbage.shortlink.admin.dto.req.LinkGroupAddReqDTO;
+import org.cabbage.shortlink.admin.dto.req.LinkGroupUpdateReqDTO;
 import org.cabbage.shortlink.admin.dto.resp.LinkGroupRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.GroupService;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,5 +44,17 @@ public class GroupController {
     @RequestMapping(value = "/api/short-link/v1/group/query", method = RequestMethod.GET)
     public Result<List<LinkGroupRespDTO>> queryGroups() {
         return Results.success(groupService.queryGroup());
+    }
+
+    /**
+     * 修改分组名
+     *
+     * @param req 分组修改请求
+     * @return 成功
+     */
+    @RequestMapping(value = "/api/short-link/v1/group/update", method = RequestMethod.POST)
+    public Result<Void> updateGroupName(@RequestBody LinkGroupUpdateReqDTO req) {
+        groupService.updateGroupName(req);
+        return Results.success();
     }
 }

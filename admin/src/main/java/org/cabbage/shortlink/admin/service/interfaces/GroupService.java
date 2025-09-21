@@ -2,6 +2,7 @@ package org.cabbage.shortlink.admin.service.interfaces;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.cabbage.shortlink.admin.dao.entity.GroupDO;
+import org.cabbage.shortlink.admin.dto.req.LinkGroupUpdateReqDTO;
 import org.cabbage.shortlink.admin.dto.resp.LinkGroupRespDTO;
 
 import java.util.List;
@@ -25,4 +26,10 @@ public interface GroupService extends IService<GroupDO> {
      * @return 所有分组
      */
     List<LinkGroupRespDTO> queryGroup();
+
+    /**
+     * 修改分组名
+     * @param req 修改请求参数
+     */
+    void updateGroupName(LinkGroupUpdateReqDTO req);
 }
