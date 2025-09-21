@@ -64,6 +64,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
 
     /**
      * 修改分组名
+     *
      * @param req 修改请求参数
      */
     @Override
@@ -72,6 +73,20 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
         update(group, new LambdaUpdateWrapper<GroupDO>()
                 .eq(GroupDO::getUsername, UserContext.getUsername())
                 .eq(GroupDO::getGid, req.getGid()));
+    }
+
+    /**
+     * 删除分组
+     *
+     * @param gid 分组标识
+     */
+    @Override
+    public void deleteGroup(String gid) {
+        GroupDO group = new GroupDO();
+        group.setDelFlag(1);
+        update(group, new LambdaUpdateWrapper<GroupDO>()
+                .eq(GroupDO::getUsername, UserContext.getUsername())
+                .eq(GroupDO::getGid, gid));
     }
 
     /**

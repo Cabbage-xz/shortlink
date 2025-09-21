@@ -7,10 +7,7 @@ import org.cabbage.shortlink.admin.dto.req.LinkGroupAddReqDTO;
 import org.cabbage.shortlink.admin.dto.req.LinkGroupUpdateReqDTO;
 import org.cabbage.shortlink.admin.dto.resp.LinkGroupRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.GroupService;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -55,6 +52,18 @@ public class GroupController {
     @RequestMapping(value = "/api/short-link/v1/group/update", method = RequestMethod.POST)
     public Result<Void> updateGroupName(@RequestBody LinkGroupUpdateReqDTO req) {
         groupService.updateGroupName(req);
+        return Results.success();
+    }
+
+    /**
+     * 删除分组名
+     *
+     * @param gid 分组gid
+     * @return 成功
+     */
+    @RequestMapping(value = "/api/short-link/v1/group/delete", method = RequestMethod.POST)
+    public Result<Void> deleteGroup(@RequestParam("gid") String gid) {
+        groupService.deleteGroup(gid);
         return Results.success();
     }
 }
