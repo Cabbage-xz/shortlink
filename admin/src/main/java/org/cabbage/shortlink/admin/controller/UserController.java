@@ -1,8 +1,6 @@
 package org.cabbage.shortlink.admin.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.cabbage.shortlink.admin.common.convention.result.Result;
-import org.cabbage.shortlink.admin.common.convention.result.Results;
 import org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum;
 import org.cabbage.shortlink.admin.dto.req.UserLoginReqDTO;
 import org.cabbage.shortlink.admin.dto.req.UserRegisterReqDTO;
@@ -10,6 +8,8 @@ import org.cabbage.shortlink.admin.dto.req.UserUpdateReqDTO;
 import org.cabbage.shortlink.admin.dto.resp.UserLoginRespDTO;
 import org.cabbage.shortlink.admin.dto.resp.UserRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.UserService;
+import org.cabbage.shortlink.common.convention.result.Result;
+import org.cabbage.shortlink.common.convention.result.Results;
 import org.springframework.web.bind.annotation.*;
 
 @RestController

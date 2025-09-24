@@ -1,12 +1,12 @@
-package org.cabbage.shortlink.admin.common.convention.exception;
+package org.cabbage.shortlink.common.convention.exception;
 
 /**
  * @author xzcabbage
  * @since 2025/9/7
  */
 
-import org.cabbage.shortlink.admin.common.convention.errorcode.BaseErrorCode;
-import org.cabbage.shortlink.admin.common.convention.errorcode.IErrorCode;
+import org.cabbage.shortlink.common.convention.errorcode.BaseErrorCode;
+import org.cabbage.shortlink.common.convention.errorcode.IErrorCode;
 
 /**
  * 远程服务调用异常

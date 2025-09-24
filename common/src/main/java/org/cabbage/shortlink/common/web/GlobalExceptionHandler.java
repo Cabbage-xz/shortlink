@@ -1,14 +1,14 @@
-package org.cabbage.shortlink.admin.common.web;
+package org.cabbage.shortlink.common.web;
 
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.StrUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.cabbage.shortlink.admin.common.convention.errorcode.BaseErrorCode;
-import org.cabbage.shortlink.admin.common.convention.exception.AbstractException;
-import org.cabbage.shortlink.admin.common.convention.result.Result;
-import org.cabbage.shortlink.admin.common.convention.result.Results;
+import org.cabbage.shortlink.common.convention.errorcode.BaseErrorCode;
+import org.cabbage.shortlink.common.convention.exception.AbstractException;
+import org.cabbage.shortlink.common.convention.result.Result;
+import org.cabbage.shortlink.common.convention.result.Results;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.validation.BindingResult;

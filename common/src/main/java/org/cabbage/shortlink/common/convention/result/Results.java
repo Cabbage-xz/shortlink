@@ -1,12 +1,12 @@
-package org.cabbage.shortlink.admin.common.convention.result;
+package org.cabbage.shortlink.common.convention.result;
 
 /**
  * @author xzcabbage
  * @since 2025/9/7
  */
-import org.cabbage.shortlink.admin.common.convention.errorcode.BaseErrorCode;
-import org.cabbage.shortlink.admin.common.convention.errorcode.IErrorCode;
-import org.cabbage.shortlink.admin.common.convention.exception.AbstractException;
+import org.cabbage.shortlink.common.convention.errorcode.BaseErrorCode;
+import org.cabbage.shortlink.common.convention.errorcode.IErrorCode;
+import org.cabbage.shortlink.common.convention.exception.AbstractException;
 
 import java.util.Optional;
 

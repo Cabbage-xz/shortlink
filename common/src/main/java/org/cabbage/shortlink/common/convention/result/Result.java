@@ -1,4 +1,4 @@
-package org.cabbage.shortlink.admin.common.convention.result;
+package org.cabbage.shortlink.common.convention.result;
 
 /**
  * @author xzcabbage

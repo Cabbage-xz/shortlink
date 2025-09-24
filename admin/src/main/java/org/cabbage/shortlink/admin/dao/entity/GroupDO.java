@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.cabbage.shortlink.admin.common.database.BaseDO;
+import org.cabbage.shortlink.common.database.BaseDO;
 
 /**
  * @author xzcabbage

@@ -1,4 +1,4 @@
-package org.cabbage.shortlink.admin.common.convention.errorcode;
+package org.cabbage.shortlink.common.convention.errorcode;
 
 /**
  * @author xzcabbage

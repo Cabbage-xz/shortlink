@@ -7,7 +7,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
-import org.cabbage.shortlink.admin.common.convention.exception.ClientException;
 import org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum;
 import org.cabbage.shortlink.admin.dao.entity.User;
 import org.cabbage.shortlink.admin.dao.mapper.UserMapper;
@@ -17,6 +16,7 @@ import org.cabbage.shortlink.admin.dto.req.UserUpdateReqDTO;
 import org.cabbage.shortlink.admin.dto.resp.UserLoginRespDTO;
 import org.cabbage.shortlink.admin.dto.resp.UserRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.UserService;
+import org.cabbage.shortlink.common.convention.exception.ClientException;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -26,9 +26,11 @@ import org.springframework.stereotype.Service;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.cabbage.shortlink.admin.common.constant.RedisCacheConstant.LOCK_USER_LOGIN_KEY;
-import static org.cabbage.shortlink.admin.common.constant.RedisCacheConstant.LOCK_USER_REGISTER_KEY;
+
+
 import static org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum.*;
+import static org.cabbage.shortlink.common.constant.RedisCacheConstant.LOCK_USER_LOGIN_KEY;
+import static org.cabbage.shortlink.common.constant.RedisCacheConstant.LOCK_USER_REGISTER_KEY;
 
 /**
  * @author xzcabbage

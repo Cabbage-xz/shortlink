@@ -9,7 +9,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import java.io.IOException;
 import java.util.Objects;
 
-import static org.cabbage.shortlink.admin.common.constant.RedisCacheConstant.LOCK_USER_LOGIN_KEY;
+import static org.cabbage.shortlink.common.constant.RedisCacheConstant.LOCK_USER_LOGIN_KEY;
+
 
 /**
  * @author xzcabbage

@@ -1,13 +1,13 @@
 package org.cabbage.shortlink.admin.controller;
 
 import lombok.RequiredArgsConstructor;
-import org.cabbage.shortlink.admin.common.convention.result.Result;
-import org.cabbage.shortlink.admin.common.convention.result.Results;
 import org.cabbage.shortlink.admin.dto.req.LinkGroupAddReqDTO;
 import org.cabbage.shortlink.admin.dto.req.LinkGroupSortReqDTO;
 import org.cabbage.shortlink.admin.dto.req.LinkGroupUpdateReqDTO;
 import org.cabbage.shortlink.admin.dto.resp.LinkGroupRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.GroupService;
+import org.cabbage.shortlink.common.convention.result.Result;
+import org.cabbage.shortlink.common.convention.result.Results;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

@@ -1,4 +1,4 @@
-package org.cabbage.shortlink.admin.common.constant;
+package org.cabbage.shortlink.common.constant;
 
 /**
  * @author xzcabbage

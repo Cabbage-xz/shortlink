@@ -1,6 +1,7 @@
 package org.cabbage.shortlink.admin.common.enums;
 
-import org.cabbage.shortlink.admin.common.convention.errorcode.IErrorCode;
+
+import org.cabbage.shortlink.common.convention.errorcode.IErrorCode;
 
 /**
  * @author xzcabbage

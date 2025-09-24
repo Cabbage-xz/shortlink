@@ -1,4 +1,4 @@
-package org.cabbage.shortlink.admin.common.database;
+package org.cabbage.shortlink.common.database;
 
 import com.baomidou.mybatisplus.annotation.FieldFill;
 import com.baomidou.mybatisplus.annotation.TableField;

@@ -1,4 +1,4 @@
-package org.cabbage.shortlink.admin.common.convention.exception;
+package org.cabbage.shortlink.common.convention.exception;
 
 /**
  * @author xzcabbage
@@ -6,7 +6,7 @@ package org.cabbage.shortlink.admin.common.convention.exception;
  */
 
 import lombok.Getter;
-import org.cabbage.shortlink.admin.common.convention.errorcode.IErrorCode;
+import org.cabbage.shortlink.common.convention.errorcode.IErrorCode;
 import org.springframework.util.StringUtils;
 
 import java.util.Optional;

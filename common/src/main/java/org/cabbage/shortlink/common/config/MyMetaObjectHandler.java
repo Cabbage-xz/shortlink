@@ -1,4 +1,4 @@
-package org.cabbage.shortlink.admin.config;
+package org.cabbage.shortlink.common.config;
 
 import com.baomidou.mybatisplus.core.handlers.MetaObjectHandler;
 import lombok.extern.slf4j.Slf4j;

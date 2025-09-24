@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
-import org.cabbage.shortlink.admin.common.database.BaseDO;
+import org.cabbage.shortlink.common.database.BaseDO;
 
 import java.io.Serializable;
 
