@@ -1,6 +1,7 @@
 package org.cabbage.shortlink.project.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.lang.UUID;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -64,7 +65,8 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
             if (customGenerateCount > 10) {
                 throw new ServiceException(SHORT_LINK_CREATE_TIMES_TOO_MANY);
             }
-            shortUri = HashUtil.hashToBase62(req.getOriginUrl());
+            String salt = UUID.randomUUID().toString();
+            shortUri = HashUtil.hashToBase62(req.getOriginUrl() + salt);
             String fullUrl = req.getDomain() + "/" + shortUri;
             if (!shortUriCachePenetrationBloomFilter.contains(fullUrl)) {
                 break;
