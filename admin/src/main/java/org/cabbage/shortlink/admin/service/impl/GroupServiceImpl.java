@@ -58,7 +58,6 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
      */
     @Override
     public List<LinkGroupRespDTO> queryGroup() {
-        // todo 获取用户名
         List<GroupDO> list = list(new LambdaQueryWrapper<GroupDO>()
                 .eq(GroupDO::getUsername, UserContext.getUsername())
                 .orderByDesc(List.of(GroupDO::getSortOrder, GroupDO::getUpdateTime)));
@@ -122,7 +121,6 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
     private boolean isHasGid(String gid) {
         List<GroupDO> list = list(new LambdaQueryWrapper<GroupDO>()
                 .eq(GroupDO::getGid, gid)
-                // todo 设置用户名
                 .eq(GroupDO::getUsername, UserContext.getUsername()));
         return list != null && !list.isEmpty();
     }
