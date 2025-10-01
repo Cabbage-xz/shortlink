@@ -20,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -43,14 +44,19 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
      */
     @Override
     public void saveGroup(String groupName) {
+        saveGroup(UserContext.getUsername(), groupName);
+    }
+
+    @Override
+    public void saveGroup(String username, String groupName) {
         String gid;
         // 生成唯一gid
         do {
             gid = RandomGenerator.generateRandom();
-        } while (isHasGid(gid));
+        } while (isHasGid(username, gid));
         GroupDO group = GroupDO.builder()
                 .gid(gid)
-                .username(UserContext.getUsername())
+                .username(username)
                 .sortOrder(0)
                 .name(groupName)
                 .build();
@@ -129,13 +135,14 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
     /**
      * 查询gid是否已存在
      *
+     * @param username 用户名
      * @param gid gid
      * @return true->gid已存在 false表示gid未存在
      */
-    private boolean isHasGid(String gid) {
+    private boolean isHasGid(String username, String gid) {
         List<GroupDO> list = list(new LambdaQueryWrapper<GroupDO>()
                 .eq(GroupDO::getGid, gid)
-                .eq(GroupDO::getUsername, UserContext.getUsername()));
+                .eq(GroupDO::getUsername, Optional.ofNullable(username).orElse(UserContext.getUsername())));
         return list != null && !list.isEmpty();
     }
 }

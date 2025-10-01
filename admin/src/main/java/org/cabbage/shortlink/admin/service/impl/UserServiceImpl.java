@@ -87,7 +87,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                     throw new ClientException(USER_SAVE_ERROR);
                 }
                 userRegisterCachePenetrationBloomFilter.add(req.getUsername());
-                groupService.saveGroup("default");
+                groupService.saveGroup(req.getUsername(), "default");
                 return;
             }
             throw new ClientException(USER_NAME_EXIST);
