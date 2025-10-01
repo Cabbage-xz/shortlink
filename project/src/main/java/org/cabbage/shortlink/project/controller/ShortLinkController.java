@@ -43,7 +43,7 @@ public class ShortLinkController {
      * @return 分页结果
      */
     @RequestMapping(value = "/api/short-link/v1/page", method = RequestMethod.GET)
-    public Result<IPage<ShortLinkPageRespDTO>> pageShortLinks(@RequestBody ShortLinkPageReqDTO req) {
+    public Result<IPage<ShortLinkPageRespDTO>> pageShortLinks(ShortLinkPageReqDTO req) {
         return Results.success(shortLinkService.pageShortLink(req));
     }
 }
