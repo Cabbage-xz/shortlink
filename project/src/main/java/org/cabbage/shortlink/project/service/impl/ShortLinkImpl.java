@@ -2,6 +2,8 @@ package org.cabbage.shortlink.project.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.UUID;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -9,7 +11,9 @@ import org.cabbage.shortlink.common.convention.exception.ServiceException;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
 import org.cabbage.shortlink.project.dao.mapper.ShortLinkMapper;
 import org.cabbage.shortlink.project.dto.req.ShortLinkCreateReqDTO;
+import org.cabbage.shortlink.project.dto.req.ShortLinkPageReqDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 import org.cabbage.shortlink.project.service.ShortLinkService;
 import org.cabbage.shortlink.project.toolkit.HashUtil;
 import org.redisson.api.RBloomFilter;
@@ -56,6 +60,20 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                 .originUrl(req.getOriginUrl())
                 .fullShortUrl(fullShortUrl)
                 .build();
+    }
+
+    /**
+     * 分页查询短链接
+     * @param req 分页请求
+     * @return 分页结果
+     */
+    @Override
+    public IPage<ShortLinkPageRespDTO> pageShortLink(ShortLinkPageReqDTO req) {
+        IPage<ShortLinkDO> page = page(req, new LambdaQueryWrapper<>(ShortLinkDO.class)
+                .eq(ShortLinkDO::getGid, req.getGid())
+                .eq(ShortLinkDO::getEnableStatus, 0)
+                .orderByDesc(ShortLinkDO::getCreateTime));
+        return page.convert(each -> BeanUtil.toBean(each, ShortLinkPageRespDTO.class));
     }
 
     private String generateShortUrl(ShortLinkCreateReqDTO req) {

@@ -1,9 +1,12 @@
 package org.cabbage.shortlink.project.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkCreateReqDTO;
+import org.cabbage.shortlink.project.dto.req.ShortLinkPageReqDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 
 /**
  * @author xzcabbage
@@ -19,4 +22,11 @@ public interface ShortLinkService extends IService<ShortLinkDO> {
      * @return 短链接响应
      */
     ShortLinkCreateRespDTO createShortLink(ShortLinkCreateReqDTO req);
+
+    /**
+     * 分页查询短链接
+     * @param req 分页请求
+     * @return 分页结果
+     */
+    IPage<ShortLinkPageRespDTO> pageShortLink(ShortLinkPageReqDTO req);
 }
