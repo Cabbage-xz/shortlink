@@ -15,6 +15,7 @@ import org.cabbage.shortlink.admin.dto.req.UserRegisterReqDTO;
 import org.cabbage.shortlink.admin.dto.req.UserUpdateReqDTO;
 import org.cabbage.shortlink.admin.dto.resp.UserLoginRespDTO;
 import org.cabbage.shortlink.admin.dto.resp.UserRespDTO;
+import org.cabbage.shortlink.admin.service.interfaces.GroupService;
 import org.cabbage.shortlink.admin.service.interfaces.UserService;
 import org.cabbage.shortlink.common.convention.exception.ClientException;
 import org.redisson.api.RBloomFilter;
@@ -39,6 +40,8 @@ import static org.cabbage.shortlink.common.constant.RedisCacheConstant.LOCK_USER
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
+
+    private final GroupService groupService;
 
     private final RBloomFilter<String> userRegisterCachePenetrationBloomFilter;
     private final RedissonClient redissonClient;
@@ -84,6 +87,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
                     throw new ClientException(USER_SAVE_ERROR);
                 }
                 userRegisterCachePenetrationBloomFilter.add(req.getUsername());
+                groupService.saveGroup("default");
                 return;
             }
             throw new ClientException(USER_NAME_EXIST);
