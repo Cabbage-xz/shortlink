@@ -61,6 +61,12 @@ public class ShortLinkPageRespDTO {
     private LocalDateTime validDate;
 
     /**
+     * 创建时间
+     */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss", timezone = "GMT+8")
+    private LocalDateTime createTime;
+
+    /**
      * 描述
      */
     private String description;
