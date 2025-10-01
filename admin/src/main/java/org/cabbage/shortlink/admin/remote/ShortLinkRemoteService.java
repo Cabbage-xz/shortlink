@@ -1,4 +1,4 @@
-package org.cabbage.shortlink.admin.remote.dto;
+package org.cabbage.shortlink.admin.remote;
 
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson2.JSON;
@@ -6,11 +6,13 @@ import com.alibaba.fastjson2.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkCreateReqDTO;
 import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkPageReqDTO;
+import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkCreateRespDTO;
 import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkPageRespDTO;
 import org.cabbage.shortlink.common.convention.result.Result;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -21,12 +23,22 @@ import java.util.Map;
 public interface ShortLinkRemoteService {
 
 
+    /**
+     * 创建短链接
+     * @param req 创建短链接请求
+     * @return 创建结果
+     */
     default Result<ShortLinkCreateRespDTO> createShortLink(ShortLinkCreateReqDTO req) {
         String resultBody = HttpUtil.post("http://127.0.0.1:8001/api/short-link/v1/create", JSON.toJSONString(req));
         return JSON.parseObject(resultBody, new TypeReference<>() {
         });
     }
 
+    /**
+     * 分页查询短链接
+     * @param req 分页查询请求
+     * @return 分页查询结果
+     */
     default Result<IPage<ShortLinkPageRespDTO>> pageShortLinks(ShortLinkPageReqDTO req) {
         Map<String, Object> params = new HashMap<>();
         params.put("gid", req.getGid());
@@ -34,6 +46,20 @@ public interface ShortLinkRemoteService {
         params.put("size", req.getSize());
         String result = HttpUtil.get("http://127.0.0.1:8001/api/short-link/v1/page", params);
 
+        return JSON.parseObject(result, new TypeReference<>() {
+
+        });
+    }
+
+    /**
+     * 查询分组下短链接数量
+     * @param gIds 分组ids
+     * @return 分组标识与其下短链接数量
+     */
+    default Result<List<ShortLinkCountQueryRespDTO>> listShortLinkCount(List<String> gIds) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("gIds", gIds);
+        String result = HttpUtil.get("http://127.0.0.1:8001/api/short-link/v1/count", params);
         return JSON.parseObject(result, new TypeReference<>() {
 
         });

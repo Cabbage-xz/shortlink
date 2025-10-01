@@ -12,6 +12,7 @@ import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
 import org.cabbage.shortlink.project.dao.mapper.ShortLinkMapper;
 import org.cabbage.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkPageReqDTO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 import org.cabbage.shortlink.project.service.ShortLinkService;
@@ -19,6 +20,10 @@ import org.cabbage.shortlink.project.toolkit.HashUtil;
 import org.redisson.api.RBloomFilter;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_ALREADY_EXIST;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_CREATE_TIMES_TOO_MANY;
@@ -74,6 +79,26 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                 .eq(ShortLinkDO::getEnableStatus, 0)
                 .orderByDesc(ShortLinkDO::getCreateTime));
         return page.convert(each -> BeanUtil.toBean(each, ShortLinkPageRespDTO.class));
+    }
+
+    /**
+     * 查询分组短链接数量
+     * @param gIds 分组标识集合
+     * @return 分组与其下短链接数量
+     */
+    @Override
+    public List<ShortLinkCountQueryRespDTO> listShortLinkCount(List<String> gIds) {
+        // 从表里依据gid查count
+        Map<String, List<ShortLinkDO>> gIdMap = list(new LambdaQueryWrapper<ShortLinkDO>()
+                .in(!gIds.isEmpty(), ShortLinkDO::getGid, gIds)
+                .eq(ShortLinkDO::getEnableStatus, 0))
+                .stream().collect(Collectors.groupingBy(ShortLinkDO::getGid));
+        return gIdMap.keySet().stream().map(key -> {
+            ShortLinkCountQueryRespDTO respDTO = new ShortLinkCountQueryRespDTO();
+            respDTO.setGid(key);
+            respDTO.setShortLinkCount(gIdMap.get(key).size());
+            return respDTO;
+        }).collect(Collectors.toList());
     }
 
     private String generateShortUrl(ShortLinkCreateReqDTO req) {

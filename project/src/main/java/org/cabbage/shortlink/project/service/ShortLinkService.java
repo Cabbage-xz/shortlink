@@ -5,8 +5,11 @@ import com.baomidou.mybatisplus.extension.service.IService;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkPageReqDTO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkPageRespDTO;
+
+import java.util.List;
 
 /**
  * @author xzcabbage
@@ -29,4 +32,11 @@ public interface ShortLinkService extends IService<ShortLinkDO> {
      * @return 分页结果
      */
     IPage<ShortLinkPageRespDTO> pageShortLink(ShortLinkPageReqDTO req);
+
+    /**
+     * 查询分组短链接数量
+     * @param gIds 分组标识集合
+     * @return 分组与其下短链接数量
+     */
+    List<ShortLinkCountQueryRespDTO> listShortLinkCount(List<String> gIds);
 }

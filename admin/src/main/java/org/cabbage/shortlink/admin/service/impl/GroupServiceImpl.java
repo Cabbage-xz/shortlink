@@ -11,6 +11,8 @@ import org.cabbage.shortlink.admin.dao.mapper.GroupMapper;
 import org.cabbage.shortlink.admin.dto.req.LinkGroupSortReqDTO;
 import org.cabbage.shortlink.admin.dto.req.LinkGroupUpdateReqDTO;
 import org.cabbage.shortlink.admin.dto.resp.LinkGroupRespDTO;
+import org.cabbage.shortlink.admin.remote.ShortLinkRemoteService;
+import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.GroupService;
 import org.cabbage.shortlink.admin.toolkit.RandomGenerator;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,10 @@ import java.util.stream.Collectors;
 @Service
 public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implements GroupService {
 
+
+    ShortLinkRemoteService shortLinkRemoteService = new ShortLinkRemoteService() {
+
+    };
 
     /**
      * 新增分组
@@ -61,7 +67,15 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
         List<GroupDO> list = list(new LambdaQueryWrapper<GroupDO>()
                 .eq(GroupDO::getUsername, UserContext.getUsername())
                 .orderByDesc(List.of(GroupDO::getSortOrder, GroupDO::getUpdateTime)));
-        return BeanUtil.copyToList(list, LinkGroupRespDTO.class);
+        Map<String, Integer> gidCountMap = shortLinkRemoteService.listShortLinkCount(list.stream().map(GroupDO::getGid)
+                        .collect(Collectors.toList())).getData().stream()
+                .collect(Collectors.toMap(ShortLinkCountQueryRespDTO::getGid, ShortLinkCountQueryRespDTO::getShortLinkCount));
+        return list.stream().map(group -> {
+            LinkGroupRespDTO linkGroupRespDTO = new LinkGroupRespDTO();
+            BeanUtil.copyProperties(group, linkGroupRespDTO);
+            linkGroupRespDTO.setShortLinkCount(gidCountMap.getOrDefault(group.getGid(), 0));
+            return linkGroupRespDTO;
+        }).collect(Collectors.toList());
 
     }
 

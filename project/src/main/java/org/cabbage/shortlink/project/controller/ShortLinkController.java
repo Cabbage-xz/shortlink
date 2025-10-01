@@ -6,13 +6,13 @@ import org.cabbage.shortlink.common.convention.result.Result;
 import org.cabbage.shortlink.common.convention.result.Results;
 import org.cabbage.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkPageReqDTO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 import org.cabbage.shortlink.project.service.ShortLinkService;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @author xzcabbage
@@ -45,5 +45,15 @@ public class ShortLinkController {
     @RequestMapping(value = "/api/short-link/v1/page", method = RequestMethod.GET)
     public Result<IPage<ShortLinkPageRespDTO>> pageShortLinks(ShortLinkPageReqDTO req) {
         return Results.success(shortLinkService.pageShortLink(req));
+    }
+
+    /**
+     * 查询分组短链接数量
+     * @param gIds 分组标识集合
+     * @return 分组与其下短链接数量
+     */
+    @RequestMapping(value = "/api/short-link/v1/count", method = RequestMethod.GET)
+    public Result<List<ShortLinkCountQueryRespDTO>> listShortLinkCount(@RequestParam("gIds") List<String> gIds) {
+        return Results.success(shortLinkService.listShortLinkCount(gIds));
     }
 }

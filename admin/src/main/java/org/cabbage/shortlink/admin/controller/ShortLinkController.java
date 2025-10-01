@@ -2,16 +2,16 @@ package org.cabbage.shortlink.admin.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.extern.slf4j.Slf4j;
-import org.cabbage.shortlink.admin.remote.dto.ShortLinkRemoteService;
+import org.cabbage.shortlink.admin.remote.ShortLinkRemoteService;
 import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkCreateReqDTO;
 import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkPageReqDTO;
+import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkCreateRespDTO;
 import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkPageRespDTO;
 import org.cabbage.shortlink.common.convention.result.Result;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 /**
  * @author xzcabbage
@@ -44,6 +44,16 @@ public class ShortLinkController {
     @RequestMapping(value = "/api/short-link/admin/v1/page", method = RequestMethod.GET)
     public Result<IPage<ShortLinkPageRespDTO>> pageShortLinks(ShortLinkPageReqDTO req) {
         return shortLinkRemoteService.pageShortLinks(req);
+    }
+
+    /**
+     * 查询分组下短链接数量
+     * @param gIds 分组标识
+     * @return 分组与其下短链接数
+     */
+    @RequestMapping(value = "/api/short-link/admin/v1/count", method = RequestMethod.GET)
+    public Result<List<ShortLinkCountQueryRespDTO>> listShortLinkCount(@RequestParam("gIds") List<String> gIds) {
+        return shortLinkRemoteService.listShortLinkCount(gIds);
     }
 
 }
