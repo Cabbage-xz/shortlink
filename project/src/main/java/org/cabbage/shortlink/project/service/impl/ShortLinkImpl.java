@@ -150,7 +150,11 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                 .eq(ShortLinkDO::getGid, req.getGid())
                 .eq(ShortLinkDO::getEnableStatus, 0)
                 .orderByDesc(ShortLinkDO::getCreateTime));
-        return page.convert(each -> BeanUtil.toBean(each, ShortLinkPageRespDTO.class));
+        return page.convert(each -> {
+            ShortLinkPageRespDTO bean = BeanUtil.toBean(each, ShortLinkPageRespDTO.class);
+            bean.setDomain("http://" + bean.getDomain());
+            return bean;
+        });
     }
 
     /**
