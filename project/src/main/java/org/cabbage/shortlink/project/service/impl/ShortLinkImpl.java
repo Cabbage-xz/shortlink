@@ -27,6 +27,7 @@ import org.cabbage.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 import org.cabbage.shortlink.project.service.LinkGotoService;
 import org.cabbage.shortlink.project.service.ShortLinkService;
 import org.cabbage.shortlink.project.toolkit.HashUtil;
+import org.cabbage.shortlink.project.toolkit.LinkUtil;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -88,6 +89,8 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
             log.warn("short url {} already exists", fullShortUrl);
             throw new ServiceException(SHORT_LINK_ALREADY_EXIST);
         }
+        stringRedisTemplate.opsForValue().set(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl),
+                req.getOriginUrl(), LinkUtil.getLinkCacheValidTime(req.getValidDate()), TimeUnit.MILLISECONDS);
         shortUriCachePenetrationBloomFilter.add(fullShortUrl);
         return ShortLinkCreateRespDTO.builder()
                 .gid(req.getGid())
@@ -114,6 +117,11 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
         ShortLinkDO updateDO = BeanUtil.toBean(req, ShortLinkDO.class);
         if (Objects.equals(req.getValidDateType(), ValidDateTypeEnum.PERMANENT.getType())) {
             updateDO.setValidDate(LocalDateTime.of(2099, 12, 31, 23, 59, 59));
+        }
+        // 若修改原始链接，则需要更新缓存
+        if (!one.getOriginUrl().equals(req.getOriginUrl())) {
+            stringRedisTemplate.opsForValue().set(String.format(GOTO_SHORT_LINK_KEY, req.getFullShortUrl()),
+                    req.getOriginUrl(), LinkUtil.getLinkCacheValidTime(req.getValidDate()), TimeUnit.MILLISECONDS);
         }
         if (req.getOriginGid().equals(req.getGid())) {
             // 分组相同 直接更新
