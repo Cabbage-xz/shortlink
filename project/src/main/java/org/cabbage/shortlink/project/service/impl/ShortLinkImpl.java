@@ -216,10 +216,12 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
         // 缓存不包含短链接时，通过布隆过滤器判断数据库中是否包含原数据（即判断是缓存过期，还是无数据）
         if (!shortUriCachePenetrationBloomFilter.contains(shortUri)) {
             // 不包含原数据 直接返回
+            ((HttpServletResponse) res).sendRedirect("/page/notfound");
             return;
         }
         // 包含原数据 查看缓存中是否已存储过“空值”，此处指已查询过数据库，且数据库中无对应数据
         if (StrUtil.isNotBlank(stringRedisTemplate.opsForValue().get(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl)))) {
+            ((HttpServletResponse) res).sendRedirect("/page/notfound");
             return;
         }
 
@@ -236,6 +238,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
             if (one == null) {
                 // 查数据库为空 填充缓存中空值
                 stringRedisTemplate.opsForValue().set(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl), "-", 30, TimeUnit.SECONDS);
+                ((HttpServletResponse) res).sendRedirect("/page/notfound");
                 return;
             }
             ShortLinkDO shortLinkDO = getOne(new LambdaQueryWrapper<ShortLinkDO>()
@@ -246,6 +249,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                 // 短链接数据库中有效期已过期
                 if (shortLinkDO.getValidDate() != null && shortLinkDO.getValidDate().isBefore(LocalDateTime.now())) {
                     stringRedisTemplate.opsForValue().set(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl), "-", 30, TimeUnit.SECONDS);
+                    ((HttpServletResponse) res).sendRedirect("/page/notfound");
                     return;
                 }
                 stringRedisTemplate.opsForValue().set(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl),
