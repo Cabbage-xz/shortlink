@@ -6,10 +6,15 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.cabbage.shortlink.common.convention.exception.ServiceException;
 import org.cabbage.shortlink.project.common.enums.ValidDateTypeEnum;
+import org.cabbage.shortlink.project.dao.entity.LinkGotoDO;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
 import org.cabbage.shortlink.project.dao.mapper.ShortLinkMapper;
 import org.cabbage.shortlink.project.dto.req.ShortLinkCreateReqDTO;
@@ -18,6 +23,7 @@ import org.cabbage.shortlink.project.dto.req.ShortLinkUpdateReqDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkPageRespDTO;
+import org.cabbage.shortlink.project.service.LinkGotoService;
 import org.cabbage.shortlink.project.service.ShortLinkService;
 import org.cabbage.shortlink.project.toolkit.HashUtil;
 import org.redisson.api.RBloomFilter;
@@ -48,12 +54,15 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
 
     private final RBloomFilter<String> shortUriCachePenetrationBloomFilter;
 
+    private final LinkGotoService linkGotoService;
+
     /**
      * 创建短链接
      *
      * @param req 创建请求实体
      * @return 短链接
      */
+    @Transactional
     @Override
     public ShortLinkCreateRespDTO createShortLink(ShortLinkCreateReqDTO req) {
         String shortUri = generateShortUrl(req);
@@ -63,6 +72,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
         linkDO.setFullShortUrl(fullShortUrl);
         try {
             save(linkDO);
+            linkGotoService.save(LinkGotoDO.builder().fullShortUrl(fullShortUrl).gid(req.getGid()).build());
         } catch (DuplicateKeyException exception) {
             log.warn("short url {} already exists", fullShortUrl);
             throw new ServiceException(SHORT_LINK_ALREADY_EXIST);
@@ -71,7 +81,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
         return ShortLinkCreateRespDTO.builder()
                 .gid(req.getGid())
                 .originUrl(req.getOriginUrl())
-                .fullShortUrl(fullShortUrl)
+                .fullShortUrl("http://" + fullShortUrl)
                 .build();
     }
 
@@ -105,6 +115,10 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                     .eq(ShortLinkDO::getGid, req.getOriginGid())
                     .eq(ShortLinkDO::getFullShortUrl, req.getFullShortUrl())
                     .set(ShortLinkDO::getDelFlag, 1));
+            linkGotoService.update(new LambdaUpdateWrapper<LinkGotoDO>()
+                    .eq(LinkGotoDO::getFullShortUrl, req.getFullShortUrl())
+                    .eq(LinkGotoDO::getGid, req.getOriginGid())
+                    .set(LinkGotoDO::getDelFlag, 1));
             // 把原先属性复制到更新对象中
             ShortLinkDO insertDO = ShortLinkDO.builder()
                     .domain(one.getDomain())
@@ -121,6 +135,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                     .description(updateDO.getDescription())
                     .build();
             save(insertDO);
+            linkGotoService.save(LinkGotoDO.builder().gid(req.getGid()).fullShortUrl(req.getFullShortUrl()).build());
         }
     }
 
@@ -156,6 +171,29 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
             respDTO.setShortLinkCount(gIdMap.get(key).size());
             return respDTO;
         }).collect(Collectors.toList());
+    }
+
+    /**
+     * 短链接跳转
+     * @param shortUrl 短链接
+     * @param req 请求
+     * @param res 响应
+     */
+    @SneakyThrows
+    @Override
+    public void jumpLink(String shortUrl, ServletRequest req, ServletResponse res) {
+        LinkGotoDO one = linkGotoService.getOne(new LambdaQueryWrapper<LinkGotoDO>()
+                .eq(LinkGotoDO::getFullShortUrl, shortUrl));
+        if (one == null) {
+            return;
+        }
+        ShortLinkDO shortLinkDO = getOne(new LambdaQueryWrapper<ShortLinkDO>()
+                .eq(ShortLinkDO::getGid, one.getGid())
+                .eq(ShortLinkDO::getFullShortUrl, shortUrl)
+                .eq(ShortLinkDO::getEnableStatus, 0));
+        if (shortLinkDO != null) {
+            ((HttpServletResponse) res).sendRedirect(shortLinkDO.getOriginUrl());
+        }
     }
 
     private String generateShortUrl(ShortLinkCreateReqDTO req) {

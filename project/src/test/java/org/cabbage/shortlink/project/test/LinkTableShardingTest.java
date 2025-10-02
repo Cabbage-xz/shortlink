@@ -44,12 +44,25 @@ public class LinkTableShardingTest {
             "    unique (gid, username)\n" +
             ");";
 
+    public static final String SQL_LINK_GOTO = "create table t_link_goto_%d\n" +
+            "(\n" +
+            "    id              bigint auto_increment comment 'ID'\n" +
+            "        primary key,\n" +
+            "    full_short_url  varchar(128) collate utf8mb4_general_ci                  null comment '完整短链接',\n" +
+            "    gid             varchar(32) collate utf8mb4_general_ci default 'default' null comment '分组标识',\n" +
+            "    create_time     datetime                                                 null comment '创建时间',\n" +
+            "    update_time     datetime                                                 null comment '更新时间',\n" +
+            "    del_flag        tinyint(1)                                               null comment '删除标识 0:未删除 1:已删除',\n" +
+            "    constraint idx_unique_full_short_url\n" +
+            "        unique (full_short_url)\n" +
+            ");";
+
 
 
 
     public static void main(String[] args) {
         for (int i = 0; i < 16; i++) {
-            System.out.printf((SQL_GROUP) + "%n", i);
+            System.out.printf((SQL_LINK_GOTO) + "%n", i);
         }
     }
 }

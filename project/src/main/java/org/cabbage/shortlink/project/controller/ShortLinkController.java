@@ -1,6 +1,9 @@
 package org.cabbage.shortlink.project.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.common.convention.result.Result;
 import org.cabbage.shortlink.common.convention.result.Results;
@@ -11,7 +14,12 @@ import org.cabbage.shortlink.project.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 import org.cabbage.shortlink.project.service.ShortLinkService;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -65,5 +73,16 @@ public class ShortLinkController {
     @RequestMapping(value = "/api/short-link/v1/count", method = RequestMethod.GET)
     public Result<List<ShortLinkCountQueryRespDTO>> listShortLinkCount(@RequestParam("gIds") List<String> gIds) {
         return Results.success(shortLinkService.listShortLinkCount(gIds));
+    }
+
+    /**
+     * 短链接跳转
+     * @param shortUrl 完整短链接
+     * @param req 请求
+     * @param res 响应
+     */
+    @RequestMapping(value = "{short-url}", method = RequestMethod.GET)
+    public void jumpLink(@PathVariable("short-url") String shortUrl, ServletRequest req, ServletResponse res) {
+        shortLinkService.jumpLink(shortUrl, req, res);
     }
 }

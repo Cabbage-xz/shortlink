@@ -2,6 +2,8 @@ package org.cabbage.shortlink.project.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkPageReqDTO;
@@ -46,4 +48,12 @@ public interface ShortLinkService extends IService<ShortLinkDO> {
      * @return 分组与其下短链接数量
      */
     List<ShortLinkCountQueryRespDTO> listShortLinkCount(List<String> gIds);
+
+    /**
+     * 短链接跳转
+     * @param shortUrl 短链接
+     * @param req 请求
+     * @param res 响应
+     */
+    void jumpLink(String shortUrl, ServletRequest req, ServletResponse res);
 }
