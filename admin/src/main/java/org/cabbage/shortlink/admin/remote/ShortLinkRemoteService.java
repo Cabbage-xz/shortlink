@@ -11,6 +11,7 @@ import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkCreateRespDTO;
 import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkPageRespDTO;
 import org.cabbage.shortlink.common.convention.result.Result;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.HashMap;
 import java.util.List;
@@ -71,6 +72,18 @@ public interface ShortLinkRemoteService {
         Map<String, Object> params = new HashMap<>();
         params.put("gIds", gIds);
         String result = HttpUtil.get("http://127.0.0.1:8001/api/short-link/v1/count", params);
+        return JSON.parseObject(result, new TypeReference<>() {
+
+        });
+    }
+
+    /**
+     * 依据url获取网站标题
+     * @param url url
+     * @return 网站标题
+     */
+    default Result<String> getTitleByUrl(@RequestParam("url") String url) {
+        String result = HttpUtil.get("http://127.0.0.1:8001/api/short-link/v1/title?url=" + url);
         return JSON.parseObject(result, new TypeReference<>() {
 
         });
