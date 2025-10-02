@@ -39,8 +39,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.cabbage.shortlink.common.constant.RedisCacheConstant.GOTO_IS_NULL_SHORT_LINK_KEY;
 import static org.cabbage.shortlink.common.constant.RedisCacheConstant.GOTO_SHORT_LINK_KEY;
 import static org.cabbage.shortlink.common.constant.RedisCacheConstant.LOCK_GOTO_SHORT_LINK_KEY;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_ALREADY_EXIST;
@@ -197,11 +199,22 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
     public void jumpLink(String shortUri, ServletRequest req, ServletResponse res) {
         String serverName = req.getServerName();
         String fullShortUrl = serverName + "/" + shortUri;
+        // 查询缓存是否包含原始链接
         String originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
         if (StrUtil.isNotBlank(originalUrl)) {
             ((HttpServletResponse) res).sendRedirect(originalUrl);
             return;
         }
+        // 缓存不包含短链接时，通过布隆过滤器判断数据库中是否包含原数据（即判断是缓存过期，还是无数据）
+        if (!shortUriCachePenetrationBloomFilter.contains(shortUri)) {
+            // 不包含原数据 直接返回
+            return;
+        }
+        // 包含原数据 查看缓存中是否已存储过“空值”，此处指已查询过数据库，且数据库中无对应数据
+        if (StrUtil.isNotBlank(stringRedisTemplate.opsForValue().get(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl)))) {
+            return;
+        }
+
         RLock lock = redissonClient.getLock(String.format(LOCK_GOTO_SHORT_LINK_KEY, fullShortUrl));
         lock.lock();
         try {
@@ -213,6 +226,8 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
             LinkGotoDO one = linkGotoService.getOne(new LambdaQueryWrapper<LinkGotoDO>()
                     .eq(LinkGotoDO::getFullShortUrl, fullShortUrl));
             if (one == null) {
+                // 查数据库为空 填充缓存中空值
+                stringRedisTemplate.opsForValue().set(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl), "-", 30, TimeUnit.SECONDS);
                 return;
             }
             ShortLinkDO shortLinkDO = getOne(new LambdaQueryWrapper<ShortLinkDO>()
