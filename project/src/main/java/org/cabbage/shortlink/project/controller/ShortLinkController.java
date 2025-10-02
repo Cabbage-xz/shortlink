@@ -6,6 +6,7 @@ import org.cabbage.shortlink.common.convention.result.Result;
 import org.cabbage.shortlink.common.convention.result.Results;
 import org.cabbage.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkPageReqDTO;
+import org.cabbage.shortlink.project.dto.req.ShortLinkUpdateReqDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkPageRespDTO;
@@ -36,6 +37,15 @@ public class ShortLinkController {
         return Results.success(shortLinkService.createShortLink(req));
     }
 
+    /**
+     * 修改短链接信息
+     * @return void
+     */
+    @RequestMapping(value = "/api/short-link/v1/update", method = RequestMethod.POST)
+    public Result<Void> updateShortLink(@RequestBody ShortLinkUpdateReqDTO req) {
+        shortLinkService.updateShortLink(req);
+        return Results.success();
+    }
 
     /**
      * 分页查询短链接

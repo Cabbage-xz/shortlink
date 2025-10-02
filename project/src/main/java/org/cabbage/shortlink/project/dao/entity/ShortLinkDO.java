@@ -2,7 +2,10 @@ package org.cabbage.shortlink.project.dao.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.cabbage.shortlink.common.database.BaseDO;
 
 import java.time.LocalDateTime;
@@ -13,6 +16,9 @@ import java.time.LocalDateTime;
  * 短链接实体类
  */
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @TableName("t_link")
 public class ShortLinkDO extends BaseDO {
 

@@ -3,15 +3,18 @@ package org.cabbage.shortlink.project.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.UUID;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cabbage.shortlink.common.convention.exception.ServiceException;
+import org.cabbage.shortlink.project.common.enums.ValidDateTypeEnum;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
 import org.cabbage.shortlink.project.dao.mapper.ShortLinkMapper;
 import org.cabbage.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkPageReqDTO;
+import org.cabbage.shortlink.project.dto.req.ShortLinkUpdateReqDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkPageRespDTO;
@@ -20,13 +23,18 @@ import org.cabbage.shortlink.project.toolkit.HashUtil;
 import org.redisson.api.RBloomFilter;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_ALREADY_EXIST;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_CREATE_TIMES_TOO_MANY;
+import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_NOT_EXIST;
+
 
 /**
  * @author xzcabbage
@@ -65,6 +73,55 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                 .originUrl(req.getOriginUrl())
                 .fullShortUrl(fullShortUrl)
                 .build();
+    }
+
+    /**
+     * 更新短链接
+     * @param req 更新请求
+     */
+    @Transactional
+    @Override
+    public void updateShortLink(ShortLinkUpdateReqDTO req) {
+        // 先依据full url查询
+        ShortLinkDO one = getOne(new LambdaQueryWrapper<ShortLinkDO>()
+                .eq(ShortLinkDO::getFullShortUrl, req.getFullShortUrl())
+                .eq(ShortLinkDO::getGid, req.getOriginGid())
+                .eq(ShortLinkDO::getEnableStatus, 0));
+        if (one == null) {
+            throw new ServiceException(SHORT_LINK_NOT_EXIST);
+        }
+        ShortLinkDO updateDO = BeanUtil.toBean(req, ShortLinkDO.class);
+        if (Objects.equals(req.getValidDateType(), ValidDateTypeEnum.PERMANENT.getType())) {
+            updateDO.setValidDate(LocalDateTime.of(2099, 12, 31, 23, 59, 59));
+        }
+        if (req.getOriginGid().equals(req.getGid())) {
+            // 分组相同 直接更新
+            update(updateDO, new LambdaUpdateWrapper<ShortLinkDO>()
+                    .eq(ShortLinkDO::getGid, req.getOriginGid())
+                    .eq(ShortLinkDO::getFullShortUrl, req.getFullShortUrl()));
+        } else {
+            // 分组不同 先删后插
+            update(new LambdaUpdateWrapper<ShortLinkDO>()
+                    .eq(ShortLinkDO::getGid, req.getOriginGid())
+                    .eq(ShortLinkDO::getFullShortUrl, req.getFullShortUrl())
+                    .set(ShortLinkDO::getDelFlag, 1));
+            // 把原先属性复制到更新对象中
+            ShortLinkDO insertDO = ShortLinkDO.builder()
+                    .domain(one.getDomain())
+                    .shortUri(one.getShortUri())
+                    .fullShortUrl(one.getFullShortUrl())
+                    .clickNum(one.getClickNum())
+                    .favicon(one.getFavicon())
+                    .enableStatus(one.getEnableStatus())
+                    .createType(one.getCreateType())
+                    .originUrl(updateDO.getOriginUrl())
+                    .gid(updateDO.getGid())
+                    .validDateType(updateDO.getValidDateType())
+                    .validDate(updateDO.getValidDate())
+                    .description(updateDO.getDescription())
+                    .build();
+            save(insertDO);
+        }
     }
 
     /**
