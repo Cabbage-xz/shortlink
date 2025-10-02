@@ -28,6 +28,9 @@ import org.cabbage.shortlink.project.service.LinkGotoService;
 import org.cabbage.shortlink.project.service.ShortLinkService;
 import org.cabbage.shortlink.project.toolkit.HashUtil;
 import org.cabbage.shortlink.project.toolkit.LinkUtil;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -36,6 +39,8 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +87,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
         ShortLinkDO linkDO = BeanUtil.toBean(req, ShortLinkDO.class);
         linkDO.setShortUri(shortUri);
         linkDO.setFullShortUrl(fullShortUrl);
+        linkDO.setFavicon(getFavicon(req.getOriginUrl()));
         try {
             save(linkDO);
             linkGotoService.save(LinkGotoDO.builder().fullShortUrl(fullShortUrl).gid(req.getGid()).build());
@@ -278,5 +284,27 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
             customGenerateCount++;
         }
         return shortUri;
+    }
+
+    /**
+     * 获取目标网站图标
+     * @param url 目标网站
+     * @return 图标
+     */
+    @SneakyThrows
+    private String getFavicon(String url) {
+        URL targetUrl  = new URL(url);
+        HttpURLConnection httpURLConnection = (HttpURLConnection) targetUrl.openConnection();
+        httpURLConnection.setRequestMethod("GET");
+        httpURLConnection.connect();
+        int responseCode = httpURLConnection.getResponseCode();
+        if (responseCode == HttpURLConnection.HTTP_OK) {
+            Document document = Jsoup.connect(url).get();
+            Element first = document.select("link[ref~=(?i)^(shortcut )?icon]").first();
+            if (first != null) {
+                return first.attr("abs:href");
+            }
+        }
+        return null;
     }
 }
