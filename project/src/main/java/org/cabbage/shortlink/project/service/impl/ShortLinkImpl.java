@@ -2,6 +2,7 @@ package org.cabbage.shortlink.project.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.UUID;
+import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -27,7 +28,10 @@ import org.cabbage.shortlink.project.service.LinkGotoService;
 import org.cabbage.shortlink.project.service.ShortLinkService;
 import org.cabbage.shortlink.project.toolkit.HashUtil;
 import org.redisson.api.RBloomFilter;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +41,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import static org.cabbage.shortlink.common.constant.RedisCacheConstant.GOTO_SHORT_LINK_KEY;
+import static org.cabbage.shortlink.common.constant.RedisCacheConstant.LOCK_GOTO_SHORT_LINK_KEY;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_ALREADY_EXIST;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_CREATE_TIMES_TOO_MANY;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_NOT_EXIST;
@@ -55,6 +61,9 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
     private final RBloomFilter<String> shortUriCachePenetrationBloomFilter;
 
     private final LinkGotoService linkGotoService;
+
+    private final StringRedisTemplate stringRedisTemplate;
+    private final RedissonClient redissonClient;
 
     /**
      * 创建短链接
@@ -179,25 +188,45 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
 
     /**
      * 短链接跳转
-     * @param shortUrl 短链接
+     * @param shortUri 短链接
      * @param req 请求
      * @param res 响应
      */
     @SneakyThrows
     @Override
-    public void jumpLink(String shortUrl, ServletRequest req, ServletResponse res) {
-        LinkGotoDO one = linkGotoService.getOne(new LambdaQueryWrapper<LinkGotoDO>()
-                .eq(LinkGotoDO::getFullShortUrl, shortUrl));
-        if (one == null) {
+    public void jumpLink(String shortUri, ServletRequest req, ServletResponse res) {
+        String serverName = req.getServerName();
+        String fullShortUrl = serverName + "/" + shortUri;
+        String originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
+        if (StrUtil.isNotBlank(originalUrl)) {
+            ((HttpServletResponse) res).sendRedirect(originalUrl);
             return;
         }
-        ShortLinkDO shortLinkDO = getOne(new LambdaQueryWrapper<ShortLinkDO>()
-                .eq(ShortLinkDO::getGid, one.getGid())
-                .eq(ShortLinkDO::getFullShortUrl, shortUrl)
-                .eq(ShortLinkDO::getEnableStatus, 0));
-        if (shortLinkDO != null) {
-            ((HttpServletResponse) res).sendRedirect(shortLinkDO.getOriginUrl());
+        RLock lock = redissonClient.getLock(String.format(LOCK_GOTO_SHORT_LINK_KEY, fullShortUrl));
+        lock.lock();
+        try {
+            originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
+            if (StrUtil.isNotBlank(originalUrl)) {
+                ((HttpServletResponse) res).sendRedirect(originalUrl);
+                return;
+            }
+            LinkGotoDO one = linkGotoService.getOne(new LambdaQueryWrapper<LinkGotoDO>()
+                    .eq(LinkGotoDO::getFullShortUrl, fullShortUrl));
+            if (one == null) {
+                return;
+            }
+            ShortLinkDO shortLinkDO = getOne(new LambdaQueryWrapper<ShortLinkDO>()
+                    .eq(ShortLinkDO::getGid, one.getGid())
+                    .eq(ShortLinkDO::getFullShortUrl, fullShortUrl)
+                    .eq(ShortLinkDO::getEnableStatus, 0));
+            if (shortLinkDO != null) {
+                stringRedisTemplate.opsForValue().set(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl), shortLinkDO.getOriginUrl());
+                ((HttpServletResponse) res).sendRedirect(shortLinkDO.getOriginUrl());
+            }
+        } finally {
+            lock.unlock();
         }
+
     }
 
     private String generateShortUrl(ShortLinkCreateReqDTO req) {

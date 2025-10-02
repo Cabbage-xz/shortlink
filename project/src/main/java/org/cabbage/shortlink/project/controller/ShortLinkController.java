@@ -3,7 +3,6 @@ package org.cabbage.shortlink.project.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.common.convention.result.Result;
 import org.cabbage.shortlink.common.convention.result.Results;
@@ -77,12 +76,12 @@ public class ShortLinkController {
 
     /**
      * 短链接跳转
-     * @param shortUrl 完整短链接
+     * @param shortUri 完整短链接
      * @param req 请求
      * @param res 响应
      */
-    @RequestMapping(value = "{short-url}", method = RequestMethod.GET)
-    public void jumpLink(@PathVariable("short-url") String shortUrl, ServletRequest req, ServletResponse res) {
-        shortLinkService.jumpLink(shortUrl, req, res);
+    @RequestMapping(value = "{short-uri}", method = RequestMethod.GET)
+    public void jumpLink(@PathVariable("short-uri") String shortUri, ServletRequest req, ServletResponse res) {
+        shortLinkService.jumpLink(shortUri, req, res);
     }
 }

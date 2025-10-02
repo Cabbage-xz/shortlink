@@ -51,9 +51,9 @@ public interface ShortLinkService extends IService<ShortLinkDO> {
 
     /**
      * 短链接跳转
-     * @param shortUrl 短链接
+     * @param shortUri 短链接
      * @param req 请求
      * @param res 响应
      */
-    void jumpLink(String shortUrl, ServletRequest req, ServletResponse res);
+    void jumpLink(String shortUri, ServletRequest req, ServletResponse res);
 }
