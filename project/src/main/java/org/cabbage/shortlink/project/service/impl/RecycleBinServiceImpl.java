@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
 import org.cabbage.shortlink.project.dao.mapper.ShortLinkMapper;
 import org.cabbage.shortlink.project.dto.req.RecycleBinSaveReqDTO;
-import org.cabbage.shortlink.project.dto.req.ShortLinkPageReqDTO;
+import org.cabbage.shortlink.project.dto.req.ShortLinkRecycleBinPageReqDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 import org.cabbage.shortlink.project.service.RecycleBinService;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -50,11 +50,11 @@ public class RecycleBinServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLin
      * @return 分页结果
      */
     @Override
-    public IPage<ShortLinkPageRespDTO> pageShortLink(ShortLinkPageReqDTO req) {
+    public IPage<ShortLinkPageRespDTO> pageShortLink(ShortLinkRecycleBinPageReqDTO req) {
         IPage<ShortLinkDO> page = page(req, new LambdaQueryWrapper<>(ShortLinkDO.class)
-                .eq(ShortLinkDO::getGid, req.getGid())
+                .in(ShortLinkDO::getGid, req.getGidList())
                 .eq(ShortLinkDO::getEnableStatus, 1)
-                .orderByDesc(ShortLinkDO::getCreateTime));
+                .orderByDesc(ShortLinkDO::getUpdateTime));
         return page.convert(each -> {
             ShortLinkPageRespDTO bean = BeanUtil.toBean(each, ShortLinkPageRespDTO.class);
             bean.setDomain("http://" + bean.getDomain());

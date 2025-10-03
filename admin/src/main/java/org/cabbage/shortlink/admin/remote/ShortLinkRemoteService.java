@@ -7,6 +7,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.cabbage.shortlink.admin.remote.dto.req.RecycleBinSaveReqDTO;
 import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkCreateReqDTO;
 import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkPageReqDTO;
+import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkRecycleBinPageReqDTO;
 import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkUpdateReqDTO;
 import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkCreateRespDTO;
@@ -103,9 +104,9 @@ public interface ShortLinkRemoteService {
      * @param req 分页查询请求
      * @return 分页查询结果
      */
-    default Result<IPage<ShortLinkPageRespDTO>> pageRecycleBinShortLinks(ShortLinkPageReqDTO req) {
+    default Result<IPage<ShortLinkPageRespDTO>> pageRecycleBinShortLinks(ShortLinkRecycleBinPageReqDTO req) {
         Map<String, Object> params = new HashMap<>();
-        params.put("gid", req.getGid());
+        params.put("gidList", req.getGidList());
         params.put("current", req.getCurrent());
         params.put("size", req.getSize());
         String result = HttpUtil.get("http://127.0.0.1:8001/api/short-link/v1/recycle-bin/page", params);

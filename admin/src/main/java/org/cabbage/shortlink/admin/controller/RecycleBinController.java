@@ -4,8 +4,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.admin.remote.ShortLinkRemoteService;
 import org.cabbage.shortlink.admin.remote.dto.req.RecycleBinSaveReqDTO;
-import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkPageReqDTO;
+import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkRecycleBinPageReqDTO;
 import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkPageRespDTO;
+import org.cabbage.shortlink.admin.service.interfaces.RecycleBinService;
 import org.cabbage.shortlink.common.convention.result.Result;
 import org.cabbage.shortlink.common.convention.result.Results;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,6 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 public class RecycleBinController {
+
+    private final RecycleBinService recycleBinService;
 
     ShortLinkRemoteService shortLinkRemoteService = new ShortLinkRemoteService() {
 
@@ -43,7 +46,7 @@ public class RecycleBinController {
      * @return 分页结果
      */
     @RequestMapping(value = "/api/short-link/admin/v1/recycle-bin/page", method = RequestMethod.GET)
-    public Result<IPage<ShortLinkPageRespDTO>> pageShortLinks(ShortLinkPageReqDTO req) {
-        return shortLinkRemoteService.pageRecycleBinShortLinks(req);
+    public Result<IPage<ShortLinkPageRespDTO>> pageShortLinks(ShortLinkRecycleBinPageReqDTO req) {
+        return recycleBinService.pageRecycleBinShortLinks(req);
     }
 }
