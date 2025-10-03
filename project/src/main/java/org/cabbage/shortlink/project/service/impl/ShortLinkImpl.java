@@ -15,8 +15,10 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.cabbage.shortlink.common.convention.exception.ServiceException;
 import org.cabbage.shortlink.project.common.enums.ValidDateTypeEnum;
+import org.cabbage.shortlink.project.dao.entity.LinkAccessStatsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkGotoDO;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
+import org.cabbage.shortlink.project.dao.mapper.LinkAccessStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.ShortLinkMapper;
 import org.cabbage.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkPageReqDTO;
@@ -41,6 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -69,6 +72,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
     private final RBloomFilter<String> shortUriCachePenetrationBloomFilter;
 
     private final LinkGotoService linkGotoService;
+    private final LinkAccessStatsMapper linkAccessStatsMapper;
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedissonClient redissonClient;
@@ -216,6 +220,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
         // 查询缓存是否包含原始链接
         String originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
         if (StrUtil.isNotBlank(originalUrl)) {
+            insertOrUpdateShortLinkStats(fullShortUrl, null, req, res);
             ((HttpServletResponse) res).sendRedirect(originalUrl);
             return;
         }
@@ -236,6 +241,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
         try {
             originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
             if (StrUtil.isNotBlank(originalUrl)) {
+                insertOrUpdateShortLinkStats(fullShortUrl, null, req, res);
                 ((HttpServletResponse) res).sendRedirect(originalUrl);
                 return;
             }
@@ -259,10 +265,37 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
             }
             stringRedisTemplate.opsForValue().set(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl),
                     shortLinkDO.getOriginUrl(), LinkUtil.getLinkCacheValidTime(shortLinkDO.getValidDate()), TimeUnit.MILLISECONDS);
+            insertOrUpdateShortLinkStats(fullShortUrl, shortLinkDO.getGid(), req, res);
             ((HttpServletResponse) res).sendRedirect(shortLinkDO.getOriginUrl());
         } finally {
             lock.unlock();
         }
+
+    }
+
+    private void insertOrUpdateShortLinkStats(String fullShortUrl, String gid, ServletRequest req, ServletResponse res) {
+        if (StrUtil.isBlank(gid)) {
+            gid = linkGotoService.getOne(new LambdaQueryWrapper<LinkGotoDO>()
+                    .eq(LinkGotoDO::getFullShortUrl, fullShortUrl))
+                    .getGid();
+        }
+
+        // 获取日期 不包括时分秒
+        LocalDate today = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
+        int hour = now.getHour();
+        int weekday = now.getDayOfWeek().getValue();
+        LinkAccessStatsDO statsDO = LinkAccessStatsDO.builder()
+                .fullShortUrl(fullShortUrl)
+                .gid(gid)
+                .hour(hour)
+                .weekday(weekday)
+                .date(today)
+                .pv(1)
+                .uv(1)
+                .uip(1)
+                .build();
+        linkAccessStatsMapper.insertOrUpdate(statsDO);
 
     }
 
