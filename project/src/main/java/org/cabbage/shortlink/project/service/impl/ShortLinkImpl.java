@@ -2,6 +2,7 @@ package org.cabbage.shortlink.project.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.UUID;
+import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
@@ -9,6 +10,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -45,15 +48,18 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static org.cabbage.shortlink.common.constant.RedisCacheConstant.GOTO_IS_NULL_SHORT_LINK_KEY;
 import static org.cabbage.shortlink.common.constant.RedisCacheConstant.GOTO_SHORT_LINK_KEY;
 import static org.cabbage.shortlink.common.constant.RedisCacheConstant.LOCK_GOTO_SHORT_LINK_KEY;
+import static org.cabbage.shortlink.common.constant.ShortLinkConstant.SHORT_LINK_STATS_UV_KEY;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_ALREADY_EXIST;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_CREATE_TIMES_TOO_MANY;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_NOT_EXIST;
@@ -274,6 +280,32 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
     }
 
     private void insertOrUpdateShortLinkStats(String fullShortUrl, String gid, ServletRequest req, ServletResponse res) {
+
+        Cookie[] cookies = ((HttpServletRequest) req).getCookies();
+        AtomicBoolean uvFlag = new AtomicBoolean(false);
+
+        Runnable addResponseCookieTask = () -> {
+            String uv = UUID.fastUUID().toString();
+            Cookie uvCookie = new Cookie("uv", uv);
+            uvCookie.setMaxAge(60 * 60 * 24 * 30);
+            uvCookie.setPath(StrUtil.sub(fullShortUrl, fullShortUrl.indexOf("/"), fullShortUrl.length()));
+            ((HttpServletResponse) res).addCookie(uvCookie);
+            uvFlag.set(Boolean.TRUE);
+            stringRedisTemplate.opsForSet().add(SHORT_LINK_STATS_UV_KEY + fullShortUrl, uv);
+        };
+
+        if (ArrayUtil.isNotEmpty(cookies)) {
+            Arrays.stream(cookies).filter(cookie -> Objects.equals(cookie.getName(), "uv"))
+                    .findFirst()
+                    .map(Cookie::getValue)
+                    .ifPresentOrElse(cookie -> {
+                        Long add = stringRedisTemplate.opsForSet().add(SHORT_LINK_STATS_UV_KEY + fullShortUrl, cookie);
+                        uvFlag.set(add != null && add > 0L);
+                    }, addResponseCookieTask);
+        } else {
+            addResponseCookieTask.run();
+        }
+
         if (StrUtil.isBlank(gid)) {
             gid = linkGotoService.getOne(new LambdaQueryWrapper<LinkGotoDO>()
                     .eq(LinkGotoDO::getFullShortUrl, fullShortUrl))
@@ -292,7 +324,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                 .weekday(weekday)
                 .date(today)
                 .pv(1)
-                .uv(1)
+                .uv(uvFlag.get() ? 1 : 0)
                 .uip(1)
                 .build();
         linkAccessStatsMapper.insertOrUpdate(statsDO);
