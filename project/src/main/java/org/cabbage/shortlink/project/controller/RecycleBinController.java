@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.common.convention.result.Result;
 import org.cabbage.shortlink.common.convention.result.Results;
 import org.cabbage.shortlink.project.dto.req.RecycleBinRecoverReqDTO;
+import org.cabbage.shortlink.project.dto.req.RecycleBinRemoveReqDTO;
 import org.cabbage.shortlink.project.dto.req.RecycleBinSaveReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkRecycleBinPageReqDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkPageRespDTO;
@@ -50,6 +51,17 @@ public class RecycleBinController {
     @RequestMapping(value = "/api/short-link/v1/recycle-bin/recover", method = RequestMethod.POST)
     public Result<Void> recoverShortLink(@RequestBody RecycleBinRecoverReqDTO req) {
         recycleBinService.recoverShortLink(req);
+        return Results.success();
+    }
+
+    /**
+     * 回收站彻底删除短链接
+     * @param req 恢复请求
+     * @return 恢复结果
+     */
+    @RequestMapping(value = "/api/short-link/v1/recycle-bin/remove", method = RequestMethod.POST)
+    public Result<Void> removeShortLink(@RequestBody RecycleBinRemoveReqDTO req) {
+        recycleBinService.removeShortLink(req);
         return Results.success();
     }
 }

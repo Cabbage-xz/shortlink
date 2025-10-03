@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
 import org.cabbage.shortlink.project.dao.mapper.ShortLinkMapper;
 import org.cabbage.shortlink.project.dto.req.RecycleBinRecoverReqDTO;
+import org.cabbage.shortlink.project.dto.req.RecycleBinRemoveReqDTO;
 import org.cabbage.shortlink.project.dto.req.RecycleBinSaveReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkRecycleBinPageReqDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkPageRespDTO;
@@ -78,5 +79,18 @@ public class RecycleBinServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLin
         // 删除缓存中 空值缓存
         stringRedisTemplate.delete(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, req.getFullShortUrl()));
 
+    }
+
+    /**
+     * 回收站彻底删除短链接
+     * @param req 删除请求
+     */
+    @Override
+    public void removeShortLink(RecycleBinRemoveReqDTO req) {
+        ShortLinkDO shortLink = ShortLinkDO.builder().delFlag(1).build();
+        update(shortLink, new LambdaUpdateWrapper<ShortLinkDO>()
+                .eq(ShortLinkDO::getGid, req.getGid())
+                .eq(ShortLinkDO::getFullShortUrl, req.getFullShortUrl())
+                .eq(ShortLinkDO::getEnableStatus, 1));
     }
 }
