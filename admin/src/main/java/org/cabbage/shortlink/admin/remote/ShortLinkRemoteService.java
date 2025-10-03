@@ -4,6 +4,7 @@ import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import org.cabbage.shortlink.admin.remote.dto.req.RecycleBinSaveReqDTO;
 import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkCreateReqDTO;
 import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkPageReqDTO;
 import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkUpdateReqDTO;
@@ -89,4 +90,11 @@ public interface ShortLinkRemoteService {
         });
     }
 
+    /**
+     * 将短链接移动到回收站
+     * @param req 请求
+     */
+    default void saveRecycleBin(RecycleBinSaveReqDTO req) {
+        HttpUtil.post("http://127.0.0.1:8001/api/short-link/v1/recycle-bin/save", JSON.toJSONString(req));
+    }
 }
