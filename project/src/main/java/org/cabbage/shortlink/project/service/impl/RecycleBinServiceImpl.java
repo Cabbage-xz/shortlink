@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
 import org.cabbage.shortlink.project.dao.mapper.ShortLinkMapper;
+import org.cabbage.shortlink.project.dto.req.RecycleBinRecoverReqDTO;
 import org.cabbage.shortlink.project.dto.req.RecycleBinSaveReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkRecycleBinPageReqDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkPageRespDTO;
@@ -15,6 +16,7 @@ import org.cabbage.shortlink.project.service.RecycleBinService;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import static org.cabbage.shortlink.common.constant.RedisCacheConstant.GOTO_IS_NULL_SHORT_LINK_KEY;
 import static org.cabbage.shortlink.common.constant.RedisCacheConstant.GOTO_SHORT_LINK_KEY;
 
 /**
@@ -60,5 +62,21 @@ public class RecycleBinServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLin
             bean.setDomain("http://" + bean.getDomain());
             return bean;
         });
+    }
+
+    /**
+     * 回收站恢复短链接
+     * @param req 恢复请求
+     */
+    @Override
+    public void recoverShortLink(RecycleBinRecoverReqDTO req) {
+        ShortLinkDO shortLink = ShortLinkDO.builder().enableStatus(0).build();
+        update(shortLink, new LambdaUpdateWrapper<ShortLinkDO>()
+                .eq(ShortLinkDO::getGid, req.getGid())
+                .eq(ShortLinkDO::getFullShortUrl, req.getFullShortUrl())
+                .eq(ShortLinkDO::getEnableStatus, 1));
+        // 删除缓存中 空值缓存
+        stringRedisTemplate.delete(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, req.getFullShortUrl()));
+
     }
 }

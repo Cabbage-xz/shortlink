@@ -3,6 +3,7 @@ package org.cabbage.shortlink.admin.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.admin.remote.ShortLinkRemoteService;
+import org.cabbage.shortlink.admin.remote.dto.req.RecycleBinRecoverReqDTO;
 import org.cabbage.shortlink.admin.remote.dto.req.RecycleBinSaveReqDTO;
 import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkRecycleBinPageReqDTO;
 import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkPageRespDTO;
@@ -48,5 +49,16 @@ public class RecycleBinController {
     @RequestMapping(value = "/api/short-link/admin/v1/recycle-bin/page", method = RequestMethod.GET)
     public Result<IPage<ShortLinkPageRespDTO>> pageShortLinks(ShortLinkRecycleBinPageReqDTO req) {
         return recycleBinService.pageRecycleBinShortLinks(req);
+    }
+
+    /**
+     * 回收站恢复短链接
+     * @param req 恢复请求
+     * @return 恢复结果
+     */
+    @RequestMapping(value = "/api/short-link/admin/v1/recycle-bin/recover", method = RequestMethod.POST)
+    public Result<Void> recoverShortLink(@RequestBody RecycleBinRecoverReqDTO req) {
+        shortLinkRemoteService.recoverShortLink(req);
+        return Results.success();
     }
 }
