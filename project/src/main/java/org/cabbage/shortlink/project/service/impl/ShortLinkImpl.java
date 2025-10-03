@@ -32,6 +32,7 @@ import org.cabbage.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 import org.cabbage.shortlink.project.service.LinkGotoService;
 import org.cabbage.shortlink.project.service.ShortLinkService;
 import org.cabbage.shortlink.project.toolkit.HashUtil;
+import org.cabbage.shortlink.project.toolkit.IPUtil;
 import org.cabbage.shortlink.project.toolkit.LinkUtil;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -59,6 +60,7 @@ import java.util.stream.Collectors;
 import static org.cabbage.shortlink.common.constant.RedisCacheConstant.GOTO_IS_NULL_SHORT_LINK_KEY;
 import static org.cabbage.shortlink.common.constant.RedisCacheConstant.GOTO_SHORT_LINK_KEY;
 import static org.cabbage.shortlink.common.constant.RedisCacheConstant.LOCK_GOTO_SHORT_LINK_KEY;
+import static org.cabbage.shortlink.common.constant.ShortLinkConstant.SHORT_LINK_STATS_UIP_KEY;
 import static org.cabbage.shortlink.common.constant.ShortLinkConstant.SHORT_LINK_STATS_UV_KEY;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_ALREADY_EXIST;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_CREATE_TIMES_TOO_MANY;
@@ -299,12 +301,17 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                     .findFirst()
                     .map(Cookie::getValue)
                     .ifPresentOrElse(cookie -> {
-                        Long add = stringRedisTemplate.opsForSet().add(SHORT_LINK_STATS_UV_KEY + fullShortUrl, cookie);
-                        uvFlag.set(add != null && add > 0L);
+                        Long uvAdd = stringRedisTemplate.opsForSet().add(SHORT_LINK_STATS_UV_KEY + fullShortUrl, cookie);
+                        uvFlag.set(uvAdd != null && uvAdd > 0L);
                     }, addResponseCookieTask);
         } else {
             addResponseCookieTask.run();
         }
+
+        String remoteAddr = IPUtil.getRealIp(req);
+        Long uipAdd = stringRedisTemplate.opsForSet().add(SHORT_LINK_STATS_UIP_KEY + fullShortUrl, remoteAddr);
+        boolean uipFlag = uipAdd != null && uipAdd > 0L;
+
 
         if (StrUtil.isBlank(gid)) {
             gid = linkGotoService.getOne(new LambdaQueryWrapper<LinkGotoDO>()
@@ -325,7 +332,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                 .date(today)
                 .pv(1)
                 .uv(uvFlag.get() ? 1 : 0)
-                .uip(1)
+                .uip(uipFlag ? 1 : 0)
                 .build();
         linkAccessStatsMapper.insertOrUpdate(statsDO);
 

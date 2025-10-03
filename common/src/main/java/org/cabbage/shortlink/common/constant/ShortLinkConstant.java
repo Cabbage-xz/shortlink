@@ -16,4 +16,9 @@ public class ShortLinkConstant {
      * 短链接监控uv前缀
      */
     public static final String SHORT_LINK_STATS_UV_KEY = "short:link:stats:uv:";
+
+    /**
+     * 短链接监控uip前缀
+     */
+    public static final String SHORT_LINK_STATS_UIP_KEY = "short:link:stats:uip:";
 }
