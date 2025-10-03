@@ -20,6 +20,6 @@ public interface LinkAccessStatsMapper extends BaseMapper<LinkAccessStatsDO> {
             "uv = uv + #{uv}, " +
             "uip = uip + #{uip}, " +
             "update_time = NOW()")
-    int insertOrUpdate(LinkAccessStatsDO stats);
+    void insertOrUpdate(LinkAccessStatsDO stats);
 
 }
