@@ -1,9 +1,12 @@
 package org.cabbage.shortlink.project.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.common.convention.result.Result;
 import org.cabbage.shortlink.common.convention.result.Results;
 import org.cabbage.shortlink.project.dto.req.RecycleBinSaveReqDTO;
+import org.cabbage.shortlink.project.dto.req.ShortLinkPageReqDTO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 import org.cabbage.shortlink.project.service.RecycleBinService;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,5 +29,15 @@ public class RecycleBinController {
     public Result<Void> saveRecycleBin(@RequestBody RecycleBinSaveReqDTO req) {
         recycleBinService.saveRecycleBin(req);
         return Results.success();
+    }
+
+    /**
+     * 分页查询短链接
+     * @param req 请求
+     * @return 分页结果
+     */
+    @RequestMapping(value = "/api/short-link/v1/recycle-bin/page", method = RequestMethod.GET)
+    public Result<IPage<ShortLinkPageRespDTO>> pageShortLinks(ShortLinkPageReqDTO req) {
+        return Results.success(recycleBinService.pageShortLink(req));
     }
 }
