@@ -22,11 +22,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.cabbage.shortlink.common.convention.exception.ServiceException;
 import org.cabbage.shortlink.project.common.enums.ValidDateTypeEnum;
 import org.cabbage.shortlink.project.dao.entity.LinkAccessStatsDO;
+import org.cabbage.shortlink.project.dao.entity.LinkBrowserStatsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkGotoDO;
 import org.cabbage.shortlink.project.dao.entity.LinkLocaleStatsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkOsStatsDO;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
 import org.cabbage.shortlink.project.dao.mapper.LinkAccessStatsMapper;
+import org.cabbage.shortlink.project.dao.mapper.LinkBrowserStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkLocaleStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkOsStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.ShortLinkMapper;
@@ -94,6 +96,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
     private final LinkAccessStatsMapper linkAccessStatsMapper;
     private final LinkLocaleStatsMapper linkLocaleStatsMapper;
     private final LinkOsStatsMapper linkOsStatsMapper;
+    private final LinkBrowserStatsMapper linkBrowserStatsMapper;
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedissonClient redissonClient;
@@ -376,6 +379,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                 .build();
         linkLocaleStatsMapper.insertOrUpdate(localeStatsDO);
 
+        // 监控操作系统
         LinkOsStatsDO osStatsDO = LinkOsStatsDO.builder()
                 .fullShortUrl(fullShortUrl)
                 .gid(gid)
@@ -385,6 +389,15 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                 .build();
         linkOsStatsMapper.insertOrUpdate(osStatsDO);
 
+        // 监控浏览器
+        LinkBrowserStatsDO browserStatsDO = LinkBrowserStatsDO.builder()
+                .fullShortUrl(fullShortUrl)
+                .gid(gid)
+                .date(today)
+                .cnt(1)
+                .browser(ReqUtil.getBrowser(req))
+                .build();
+        linkBrowserStatsMapper.insertOrUpdate(browserStatsDO);
     }
 
     private String generateShortUrl(ShortLinkCreateReqDTO req) {
