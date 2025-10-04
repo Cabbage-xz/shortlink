@@ -8,7 +8,7 @@ import org.cabbage.shortlink.common.convention.errorcode.IErrorCode;
  */
 public enum GroupErrorCodeEnum implements IErrorCode {
 
-    GROUP_NOT_EXISTS("B00301", "短链接分组不存在");
+    GROUP_NOT_EXISTS("B00401", "短链接分组不存在");
 
     private final String code;
 
