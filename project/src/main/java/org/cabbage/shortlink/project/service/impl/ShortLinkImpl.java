@@ -312,6 +312,12 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
 
     private void insertOrUpdateShortLinkStats(String fullShortUrl, String gid, ServletRequest req, ServletResponse res) {
 
+        // 获取日期 不包括时分秒
+        LocalDate today = LocalDate.now();
+        LocalDateTime now = LocalDateTime.now();
+        int hour = now.getHour();
+        int weekday = now.getDayOfWeek().getValue();
+
         Cookie[] cookies = ((HttpServletRequest) req).getCookies();
         AtomicBoolean uvFlag = new AtomicBoolean(false);
 
@@ -323,7 +329,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
             uvCookie.setPath(StrUtil.sub(fullShortUrl, fullShortUrl.indexOf("/"), fullShortUrl.length()));
             ((HttpServletResponse) res).addCookie(uvCookie);
             uvFlag.set(Boolean.TRUE);
-            stringRedisTemplate.opsForSet().add(SHORT_LINK_STATS_UV_KEY + fullShortUrl, uv.get());
+            stringRedisTemplate.opsForSet().add(SHORT_LINK_STATS_UV_KEY + today + ":" + fullShortUrl, uv.get());
         };
 
         if (ArrayUtil.isNotEmpty(cookies)) {
@@ -332,7 +338,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                     .map(Cookie::getValue)
                     .ifPresentOrElse(cookie -> {
                         uv.set(cookie);
-                        Long uvAdd = stringRedisTemplate.opsForSet().add(SHORT_LINK_STATS_UV_KEY + fullShortUrl, cookie);
+                        Long uvAdd = stringRedisTemplate.opsForSet().add(SHORT_LINK_STATS_UV_KEY + today + ":" + fullShortUrl, cookie);
                         uvFlag.set(uvAdd != null && uvAdd > 0L);
                     }, addResponseCookieTask);
         } else {
@@ -341,7 +347,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
 
         // 监控基础指标
         String remoteAddr = ReqUtil.getRealIp(req);
-        Long uipAdd = stringRedisTemplate.opsForSet().add(SHORT_LINK_STATS_UIP_KEY + fullShortUrl, remoteAddr);
+        Long uipAdd = stringRedisTemplate.opsForSet().add(SHORT_LINK_STATS_UIP_KEY + today + ":" + fullShortUrl, remoteAddr);
         boolean uipFlag = uipAdd != null && uipAdd > 0L;
 
         if (StrUtil.isBlank(gid)) {
@@ -350,11 +356,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                     .getGid();
         }
 
-        // 获取日期 不包括时分秒
-        LocalDate today = LocalDate.now();
-        LocalDateTime now = LocalDateTime.now();
-        int hour = now.getHour();
-        int weekday = now.getDayOfWeek().getValue();
+
         LinkAccessStatsDO statsDO = LinkAccessStatsDO.builder()
                 .fullShortUrl(fullShortUrl)
                 .gid(gid)
