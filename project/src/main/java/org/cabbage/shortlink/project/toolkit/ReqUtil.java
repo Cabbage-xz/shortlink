@@ -1,5 +1,7 @@
 package org.cabbage.shortlink.project.toolkit;
 
+import cn.hutool.http.useragent.UserAgent;
+import cn.hutool.http.useragent.UserAgentUtil;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.SneakyThrows;
@@ -14,7 +16,7 @@ import java.net.UnknownHostException;
  * @since 2025/10/4
  * 获取用户真实IP
  */
-public class IPUtil {
+public class ReqUtil {
     private static final String UNKNOWN = "unknown";
     private static final String SEPARATOR = ",";
 
@@ -89,5 +91,31 @@ public class IPUtil {
         } catch (UnknownHostException e) {
             return "127.0.0.1";
         }
+    }
+
+    /**
+     * 从 ServletRequest 中获取操作系统
+     * @param request ServletRequest
+     * @return 操作系统名称
+     */
+    public static String getOs(ServletRequest request) {
+        if (!(request instanceof HttpServletRequest)) {
+            return "Unknown";
+        }
+
+        HttpServletRequest httpRequest = (HttpServletRequest) request;
+        String userAgentStr = httpRequest.getHeader("User-Agent");
+
+        if (userAgentStr == null || userAgentStr.isEmpty()) {
+            return "Unknown";
+        }
+
+        // 使用 Hutool 解析
+        UserAgent userAgent = UserAgentUtil.parse(userAgentStr);
+
+        // 获取操作系统名称
+        String osName = userAgent.getOs().getName();
+
+        return osName != null ? osName : "Unknown";
     }
 }

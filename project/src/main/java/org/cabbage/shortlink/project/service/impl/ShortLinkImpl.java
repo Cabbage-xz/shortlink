@@ -24,9 +24,11 @@ import org.cabbage.shortlink.project.common.enums.ValidDateTypeEnum;
 import org.cabbage.shortlink.project.dao.entity.LinkAccessStatsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkGotoDO;
 import org.cabbage.shortlink.project.dao.entity.LinkLocaleStatsDO;
+import org.cabbage.shortlink.project.dao.entity.LinkOsStatsDO;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
 import org.cabbage.shortlink.project.dao.mapper.LinkAccessStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkLocaleStatsMapper;
+import org.cabbage.shortlink.project.dao.mapper.LinkOsStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.ShortLinkMapper;
 import org.cabbage.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkPageReqDTO;
@@ -37,8 +39,8 @@ import org.cabbage.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 import org.cabbage.shortlink.project.service.LinkGotoService;
 import org.cabbage.shortlink.project.service.ShortLinkService;
 import org.cabbage.shortlink.project.toolkit.HashUtil;
-import org.cabbage.shortlink.project.toolkit.IPUtil;
 import org.cabbage.shortlink.project.toolkit.LinkUtil;
+import org.cabbage.shortlink.project.toolkit.ReqUtil;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -91,6 +93,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
     private final LinkGotoService linkGotoService;
     private final LinkAccessStatsMapper linkAccessStatsMapper;
     private final LinkLocaleStatsMapper linkLocaleStatsMapper;
+    private final LinkOsStatsMapper linkOsStatsMapper;
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedissonClient redissonClient;
@@ -322,7 +325,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
         }
 
         // 监控基础指标
-        String remoteAddr = IPUtil.getRealIp(req);
+        String remoteAddr = ReqUtil.getRealIp(req);
         Long uipAdd = stringRedisTemplate.opsForSet().add(SHORT_LINK_STATS_UIP_KEY + fullShortUrl, remoteAddr);
         boolean uipFlag = uipAdd != null && uipAdd > 0L;
 
@@ -372,6 +375,14 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                 .country("China")
                 .build();
         linkLocaleStatsMapper.insertOrUpdate(localeStatsDO);
+
+        LinkOsStatsDO osStatsDO = LinkOsStatsDO.builder()
+                .fullShortUrl(fullShortUrl)
+                .gid(gid)
+                .date(today)
+                .cnt(1)
+                .os(ReqUtil.getOs(req))
+                .build();
 
     }
 
