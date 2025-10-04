@@ -383,6 +383,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                 .cnt(1)
                 .os(ReqUtil.getOs(req))
                 .build();
+        linkOsStatsMapper.insertOrUpdate(osStatsDO);
 
     }
 
