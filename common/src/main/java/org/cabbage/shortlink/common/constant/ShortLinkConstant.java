@@ -21,4 +21,9 @@ public class ShortLinkConstant {
      * 短链接监控uip前缀
      */
     public static final String SHORT_LINK_STATS_UIP_KEY = "short:link:stats:uip:";
+
+    /**
+     * 高德获取地区接口地址
+     */
+    public static final String AMAP_REMOTE_URL = "https://restapi.amap.com/v3/ip";
 }

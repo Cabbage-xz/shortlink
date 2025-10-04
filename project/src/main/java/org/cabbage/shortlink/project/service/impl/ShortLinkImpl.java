@@ -4,6 +4,9 @@ import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.http.HttpUtil;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -20,8 +23,10 @@ import org.cabbage.shortlink.common.convention.exception.ServiceException;
 import org.cabbage.shortlink.project.common.enums.ValidDateTypeEnum;
 import org.cabbage.shortlink.project.dao.entity.LinkAccessStatsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkGotoDO;
+import org.cabbage.shortlink.project.dao.entity.LinkLocaleStatsDO;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
 import org.cabbage.shortlink.project.dao.mapper.LinkAccessStatsMapper;
+import org.cabbage.shortlink.project.dao.mapper.LinkLocaleStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.ShortLinkMapper;
 import org.cabbage.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkPageReqDTO;
@@ -40,6 +45,7 @@ import org.jsoup.nodes.Element;
 import org.redisson.api.RBloomFilter;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -50,6 +56,7 @@ import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -60,10 +67,12 @@ import java.util.stream.Collectors;
 import static org.cabbage.shortlink.common.constant.RedisCacheConstant.GOTO_IS_NULL_SHORT_LINK_KEY;
 import static org.cabbage.shortlink.common.constant.RedisCacheConstant.GOTO_SHORT_LINK_KEY;
 import static org.cabbage.shortlink.common.constant.RedisCacheConstant.LOCK_GOTO_SHORT_LINK_KEY;
+import static org.cabbage.shortlink.common.constant.ShortLinkConstant.AMAP_REMOTE_URL;
 import static org.cabbage.shortlink.common.constant.ShortLinkConstant.SHORT_LINK_STATS_UIP_KEY;
 import static org.cabbage.shortlink.common.constant.ShortLinkConstant.SHORT_LINK_STATS_UV_KEY;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_ALREADY_EXIST;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_CREATE_TIMES_TOO_MANY;
+import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_GET_REMOTE_LOCALE_ERROR;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_NOT_EXIST;
 
 
@@ -81,9 +90,13 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
 
     private final LinkGotoService linkGotoService;
     private final LinkAccessStatsMapper linkAccessStatsMapper;
+    private final LinkLocaleStatsMapper linkLocaleStatsMapper;
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedissonClient redissonClient;
+
+    @Value("${short-link.stats.locale.amap-key}")
+    private String statsLocaleAMapKey;
 
     /**
      * 创建短链接
@@ -308,10 +321,10 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
             addResponseCookieTask.run();
         }
 
+        // 监控基础指标
         String remoteAddr = IPUtil.getRealIp(req);
         Long uipAdd = stringRedisTemplate.opsForSet().add(SHORT_LINK_STATS_UIP_KEY + fullShortUrl, remoteAddr);
         boolean uipFlag = uipAdd != null && uipAdd > 0L;
-
 
         if (StrUtil.isBlank(gid)) {
             gid = linkGotoService.getOne(new LambdaQueryWrapper<LinkGotoDO>()
@@ -335,6 +348,30 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                 .uip(uipFlag ? 1 : 0)
                 .build();
         linkAccessStatsMapper.insertOrUpdate(statsDO);
+
+        // 获取地区指标
+        Map<String, Object> localeParamMap = new HashMap<>();
+        localeParamMap.put("key", statsLocaleAMapKey);
+        localeParamMap.put("id", remoteAddr);
+        String localeResultStr = HttpUtil.get(AMAP_REMOTE_URL, localeParamMap);
+        JSONObject localeResultObj = JSON.parseObject(localeResultStr);
+        String infoCode = localeResultObj.getString("infocode");
+        if (StrUtil.isBlank(infoCode) || !StrUtil.equals(infoCode, "10000")) {
+            throw new ServiceException(SHORT_LINK_GET_REMOTE_LOCALE_ERROR);
+        }
+        String province = localeResultObj.getString("province");
+        boolean unknownFlag = StrUtil.equals(province, "[]");
+        LinkLocaleStatsDO localeStatsDO = LinkLocaleStatsDO.builder()
+                .fullShortUrl(fullShortUrl)
+                .gid(gid)
+                .date(today)
+                .cnt(1)
+                .province(unknownFlag ? "unknown" : province)
+                .city(unknownFlag ? "unknown" : localeResultObj.getString("city"))
+                .adcode(unknownFlag ? "unknown" : localeResultObj.getString("adcode"))
+                .country("China")
+                .build();
+        linkLocaleStatsMapper.insertOrUpdate(localeStatsDO);
 
     }
 
