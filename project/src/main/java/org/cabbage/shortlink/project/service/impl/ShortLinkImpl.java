@@ -24,6 +24,7 @@ import org.cabbage.shortlink.project.common.enums.ValidDateTypeEnum;
 import org.cabbage.shortlink.project.dao.entity.LinkAccessLogsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkAccessStatsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkBrowserStatsDO;
+import org.cabbage.shortlink.project.dao.entity.LinkDeviceStatsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkGotoDO;
 import org.cabbage.shortlink.project.dao.entity.LinkLocaleStatsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkOsStatsDO;
@@ -31,6 +32,7 @@ import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
 import org.cabbage.shortlink.project.dao.mapper.LinkAccessLogsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkAccessStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkBrowserStatsMapper;
+import org.cabbage.shortlink.project.dao.mapper.LinkDeviceStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkLocaleStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkOsStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.ShortLinkMapper;
@@ -101,6 +103,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
     private final LinkOsStatsMapper linkOsStatsMapper;
     private final LinkBrowserStatsMapper linkBrowserStatsMapper;
     private final LinkAccessLogsMapper linkAccessLogsMapper;
+    private final LinkDeviceStatsMapper linkDeviceStatsMapper;
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedissonClient redissonClient;
@@ -415,6 +418,15 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                 .browser(ReqUtil.getBrowser(req))
                 .build();
         linkAccessLogsMapper.insert(accessLogsDO);
+
+        // 监控设备
+        LinkDeviceStatsDO deviceStatsDO = LinkDeviceStatsDO.builder()
+                .fullShortUrl(fullShortUrl)
+                .gid(gid)
+                .date(today)
+                .cnt(1)
+                .device(ReqUtil.getDevice(req))
+                .build();
     }
 
     private String generateShortUrl(ShortLinkCreateReqDTO req) {

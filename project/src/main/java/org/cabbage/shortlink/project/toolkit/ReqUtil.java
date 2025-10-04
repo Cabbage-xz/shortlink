@@ -146,4 +146,22 @@ public class ReqUtil {
             return "Unknown";
         }
     }
+
+    /**
+     * 获取用户访问设备
+     *
+     * @param req 请求
+     * @return 访问设备
+     */
+    public static String getDevice(ServletRequest req) {
+        if (!(req instanceof HttpServletRequest request)) {
+            return "Unknown";
+        }
+
+        String userAgent = request.getHeader("User-Agent");
+        if (userAgent.toLowerCase().contains("mobile")) {
+            return "Mobile";
+        }
+        return "PC";
+    }
 }
