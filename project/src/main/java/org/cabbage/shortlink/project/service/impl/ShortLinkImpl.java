@@ -21,12 +21,14 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.cabbage.shortlink.common.convention.exception.ServiceException;
 import org.cabbage.shortlink.project.common.enums.ValidDateTypeEnum;
+import org.cabbage.shortlink.project.dao.entity.LinkAccessLogsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkAccessStatsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkBrowserStatsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkGotoDO;
 import org.cabbage.shortlink.project.dao.entity.LinkLocaleStatsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkOsStatsDO;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
+import org.cabbage.shortlink.project.dao.mapper.LinkAccessLogsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkAccessStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkBrowserStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkLocaleStatsMapper;
@@ -66,6 +68,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.cabbage.shortlink.common.constant.RedisCacheConstant.GOTO_IS_NULL_SHORT_LINK_KEY;
@@ -97,6 +100,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
     private final LinkLocaleStatsMapper linkLocaleStatsMapper;
     private final LinkOsStatsMapper linkOsStatsMapper;
     private final LinkBrowserStatsMapper linkBrowserStatsMapper;
+    private final LinkAccessLogsMapper linkAccessLogsMapper;
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedissonClient redissonClient;
@@ -305,14 +309,15 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
         Cookie[] cookies = ((HttpServletRequest) req).getCookies();
         AtomicBoolean uvFlag = new AtomicBoolean(false);
 
+        AtomicReference<String> uv = new AtomicReference<>();
         Runnable addResponseCookieTask = () -> {
-            String uv = UUID.fastUUID().toString();
-            Cookie uvCookie = new Cookie("uv", uv);
+            uv.set(UUID.fastUUID().toString());
+            Cookie uvCookie = new Cookie("uv", uv.get());
             uvCookie.setMaxAge(60 * 60 * 24 * 30);
             uvCookie.setPath(StrUtil.sub(fullShortUrl, fullShortUrl.indexOf("/"), fullShortUrl.length()));
             ((HttpServletResponse) res).addCookie(uvCookie);
             uvFlag.set(Boolean.TRUE);
-            stringRedisTemplate.opsForSet().add(SHORT_LINK_STATS_UV_KEY + fullShortUrl, uv);
+            stringRedisTemplate.opsForSet().add(SHORT_LINK_STATS_UV_KEY + fullShortUrl, uv.get());
         };
 
         if (ArrayUtil.isNotEmpty(cookies)) {
@@ -320,6 +325,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                     .findFirst()
                     .map(Cookie::getValue)
                     .ifPresentOrElse(cookie -> {
+                        uv.set(cookie);
                         Long uvAdd = stringRedisTemplate.opsForSet().add(SHORT_LINK_STATS_UV_KEY + fullShortUrl, cookie);
                         uvFlag.set(uvAdd != null && uvAdd > 0L);
                     }, addResponseCookieTask);
@@ -398,6 +404,17 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                 .browser(ReqUtil.getBrowser(req))
                 .build();
         linkBrowserStatsMapper.insertOrUpdate(browserStatsDO);
+
+        // 监控日志
+        LinkAccessLogsDO accessLogsDO = LinkAccessLogsDO.builder()
+                .user(uv.get())
+                .fullShortUrl(fullShortUrl)
+                .gid(gid)
+                .ip(remoteAddr)
+                .os(ReqUtil.getOs(req))
+                .browser(ReqUtil.getBrowser(req))
+                .build();
+        linkAccessLogsMapper.insert(accessLogsDO);
     }
 
     private String generateShortUrl(ShortLinkCreateReqDTO req) {
