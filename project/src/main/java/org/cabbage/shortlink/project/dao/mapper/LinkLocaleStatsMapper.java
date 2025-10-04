@@ -25,4 +25,19 @@ public interface LinkLocaleStatsMapper extends BaseMapper<LinkLocaleStatsDO> {
             "update_time = NOW()")
     void insertOrUpdate(LinkLocaleStatsDO localeStatsDO);
 
+    /**
+     * 查询单个短链接的地域访问 Top5
+     */
+    @Select("SELECT " +
+            "    province, " +
+            "    SUM(cnt) AS cnt " +
+            "FROM t_link_locale_stats " +
+            "WHERE full_short_url = #{fullShortUrl} " +
+            "    AND gid = #{gid} " +
+            "    AND date BETWEEN #{startDate} AND #{endDate} " +
+            "GROUP BY province " +
+            "ORDER BY cnt DESC " +
+            "LIMIT 5")
+    List<LinkLocaleStatsDO> queryLocaleTop5BySingleShortLink(ShortLinkStatsReqDTO req);
+
 }

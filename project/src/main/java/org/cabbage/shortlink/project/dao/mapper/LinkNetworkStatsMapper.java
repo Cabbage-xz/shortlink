@@ -2,7 +2,11 @@ package org.cabbage.shortlink.project.dao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Select;
 import org.cabbage.shortlink.project.dao.entity.LinkNetworkStatsDO;
+import org.cabbage.shortlink.project.dto.req.ShortLinkStatsReqDTO;
+
+import java.util.List;
 
 /**
  * @author xzcabbage
@@ -22,4 +26,20 @@ public interface LinkNetworkStatsMapper extends BaseMapper<LinkNetworkStatsDO> {
             "cnt = cnt + #{cnt}, " +
             "update_time = NOW()")
     void insertOrUpdate(LinkNetworkStatsDO stats);
+
+    /**
+     * 根据短链接获取指定日期内访问网络监控数据
+     */
+    @Select("SELECT " +
+            "    network, " +
+            "    SUM(cnt) AS cnt " +
+            "FROM " +
+            "    t_link_network_stats " +
+            "WHERE " +
+            "    full_short_url = #{fullShortUrl} " +
+            "    AND gid = #{gid} " +
+            "    AND date BETWEEN #{startDate} and #{endDate} " +
+            "GROUP BY " +
+            "    full_short_url, gid, network;")
+    List<LinkNetworkStatsDO> queryNetworkStatsBySingleShortLink(ShortLinkStatsReqDTO req);
 }

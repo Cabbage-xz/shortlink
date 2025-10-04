@@ -2,7 +2,11 @@ package org.cabbage.shortlink.project.dao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Select;
 import org.cabbage.shortlink.project.dao.entity.LinkDeviceStatsDO;
+import org.cabbage.shortlink.project.dto.req.ShortLinkStatsReqDTO;
+
+import java.util.List;
 
 /**
  * @author xzcabbage
@@ -22,4 +26,20 @@ public interface LinkDeviceStatsMapper extends BaseMapper<LinkDeviceStatsDO> {
             "cnt = cnt + #{cnt}, " +
             "update_time = NOW()")
     void insertOrUpdate(LinkDeviceStatsDO stats);
+
+    /**
+     * 根据短链接获取指定日期内访问设备监控数据
+     */
+    @Select("SELECT " +
+            "    device, " +
+            "    SUM(cnt) AS cnt " +
+            "FROM " +
+            "    t_link_device_stats " +
+            "WHERE " +
+            "    full_short_url = #{fullShortUrl} " +
+            "    AND gid = #{gid} " +
+            "    AND date BETWEEN #{startDate} and #{endDate} " +
+            "GROUP BY " +
+            "    full_short_url, gid, device;")
+    List<LinkDeviceStatsDO> queryDeviceStatsBySingleShortLink(ShortLinkStatsReqDTO req);
 }

@@ -1,0 +1,208 @@
+package org.cabbage.shortlink.project.service.impl;
+
+import cn.hutool.core.bean.BeanUtil;
+import lombok.RequiredArgsConstructor;
+import org.cabbage.shortlink.project.dao.bo.ShortLinkStatsAccessLogBO;
+import org.cabbage.shortlink.project.dao.entity.LinkAccessStatsDO;
+import org.cabbage.shortlink.project.dao.entity.LinkBrowserStatsDO;
+import org.cabbage.shortlink.project.dao.entity.LinkDeviceStatsDO;
+import org.cabbage.shortlink.project.dao.entity.LinkLocaleStatsDO;
+import org.cabbage.shortlink.project.dao.entity.LinkNetworkStatsDO;
+import org.cabbage.shortlink.project.dao.entity.LinkOsStatsDO;
+import org.cabbage.shortlink.project.dao.mapper.LinkAccessLogsMapper;
+import org.cabbage.shortlink.project.dao.mapper.LinkAccessStatsMapper;
+import org.cabbage.shortlink.project.dao.mapper.LinkBrowserStatsMapper;
+import org.cabbage.shortlink.project.dao.mapper.LinkDeviceStatsMapper;
+import org.cabbage.shortlink.project.dao.mapper.LinkLocaleStatsMapper;
+import org.cabbage.shortlink.project.dao.mapper.LinkNetworkStatsMapper;
+import org.cabbage.shortlink.project.dao.mapper.LinkOsStatsMapper;
+import org.cabbage.shortlink.project.dto.req.ShortLinkStatsReqDTO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkStatsAccessDailyRespDTO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkStatsBrowserRespDTO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkStatsDeviceRespDTO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkStatsLocaleCNRespDTO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkStatsNetworkRespDTO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkStatsOsRespDTO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkStatsRespDTO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkStatsTopIpRespDTO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkStatsUvRespDTO;
+import org.cabbage.shortlink.project.service.ShortLinkStatsService;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+/**
+ * @author xzcabbage
+ * @since 2025/10/4
+ */
+@Service
+@RequiredArgsConstructor
+public class ShortLinkStatsServiceImpl implements ShortLinkStatsService {
+
+    private final LinkAccessStatsMapper linkAccessStatsMapper;
+    private final LinkLocaleStatsMapper linkLocaleStatsMapper;
+    private final LinkAccessLogsMapper linkAccessLogsMapper;
+    private final LinkBrowserStatsMapper linkBrowserStatsMapper;
+    private final LinkOsStatsMapper linkOsStatsMapper;
+    private final LinkDeviceStatsMapper linkDeviceStatsMapper;
+    private final LinkNetworkStatsMapper linkNetworkStatsMapper;
+
+    /**
+     * 监控单个短链接使用情况
+     * @param req 监控请求
+     * @return 使用情况
+     */
+    @Override
+    public ShortLinkStatsRespDTO singleShortLinkStats(ShortLinkStatsReqDTO req) {
+        List<LinkAccessStatsDO> linkAccessStatsDOS = linkAccessStatsMapper.queryStatsBySingleShortLink(req);
+        if (linkAccessStatsDOS.isEmpty()) {
+            return null;
+        }
+
+        int totalPv = linkAccessStatsDOS.stream().mapToInt(LinkAccessStatsDO::getPv).sum();
+        int totalUv = linkAccessStatsDOS.stream().mapToInt(LinkAccessStatsDO::getUv).sum();
+        int totalUip = linkAccessStatsDOS.stream().mapToInt(LinkAccessStatsDO::getUip).sum();
+
+        // 查询请求范围内是否有相关使用记录
+        Map<LocalDate, ShortLinkStatsAccessDailyRespDTO> shortLinkStatsAccessDateMap = linkAccessStatsDOS
+                .stream()
+                .map(linkAccessStatsDO -> BeanUtil.copyProperties(linkAccessStatsDO, ShortLinkStatsAccessDailyRespDTO.class))
+                .collect(Collectors.toMap(ShortLinkStatsAccessDailyRespDTO::getDate,
+                        e -> e,
+                        (e1, e2) -> e1));
+
+        // resp中daily数据填充
+        List<ShortLinkStatsAccessDailyRespDTO> dailyStats = req.getStartDate().datesUntil(req.getEndDate().plusDays(1))
+                .map(date -> shortLinkStatsAccessDateMap.getOrDefault(date, ShortLinkStatsAccessDailyRespDTO.builder()
+                        .date(date)
+                        .pv(0)
+                        .uv(0)
+                        .uip(0)
+                        .build()))
+                .toList();
+
+        // resp中地区数据填充
+        List<LinkLocaleStatsDO> localeStatsDOList = linkLocaleStatsMapper.queryLocaleTop5BySingleShortLink(req);
+        int localeCntSum = localeStatsDOList.stream().mapToInt(LinkLocaleStatsDO::getCnt).sum();
+        List<ShortLinkStatsLocaleCNRespDTO> localeStats = localeStatsDOList.stream().map(localeDo ->
+                ShortLinkStatsLocaleCNRespDTO.builder()
+                        .locale(localeDo.getProvince())
+                        .cnt(localeDo.getCnt())
+                        .ratio(Math.round(((double) localeDo.getCnt() / localeCntSum) * 100.0) / 100.0)
+                        .build()
+        ).toList();
+
+        // 小时访问详情
+        Map<Integer, LinkAccessStatsDO> shortLinkStatsAccessHourMap = linkAccessStatsMapper.queryHourStatsBySingleShortLink(req)
+                .stream().collect(Collectors.toMap(LinkAccessStatsDO::getHour, e -> e));
+        Map<Integer, Integer> hourStats = new HashMap<>();
+        for (int hour = 0; hour < 24; hour++) {
+            hourStats.put(hour, shortLinkStatsAccessHourMap.getOrDefault(hour, LinkAccessStatsDO.builder().pv(0).build()).getPv());
+        }
+
+        // 一周访问详情
+        Map<Integer, LinkAccessStatsDO> shortLinkStatsAccessWeekdayMap = linkAccessStatsMapper.queryWeekdayStatsBySingleShortLink(req)
+                .stream().collect(Collectors.toMap(LinkAccessStatsDO::getWeekday, e -> e));
+        Map<Integer, Integer> weekdayStats = new HashMap<>();
+        for (int weekday = 1; weekday < 8; weekday++) {
+            weekdayStats.put(weekday, shortLinkStatsAccessWeekdayMap.getOrDefault(weekday, LinkAccessStatsDO.builder().pv(0).build()).getPv());
+        }
+
+        // 高频IP访问详情
+        List<ShortLinkStatsAccessLogBO> ShortLinkTop5Ip = linkAccessLogsMapper.listTop5IpByShortLink(req);
+        List<ShortLinkStatsTopIpRespDTO> topIpStats = BeanUtil.copyToList(ShortLinkTop5Ip, ShortLinkStatsTopIpRespDTO.class);
+
+        // 访客类型访问详情
+        ShortLinkStatsAccessLogBO uvTypeCntByShortLink = linkAccessLogsMapper.findUvTypeCntByShortLink(req);
+        int oldUserCnt = uvTypeCntByShortLink.getCnt();
+        int newUserCnt = uvTypeCntByShortLink.getCnt();
+        int totalUserCnt = oldUserCnt + newUserCnt;
+
+        List<ShortLinkStatsUvRespDTO> uvTypeStats = new ArrayList<>();
+        uvTypeStats.add(ShortLinkStatsUvRespDTO.builder().uvType("newUser").cnt(newUserCnt)
+                .ratio(Math.round(((double) newUserCnt / totalUserCnt) * 100.0) / 100.0).build());
+        uvTypeStats.add(ShortLinkStatsUvRespDTO.builder().uvType("oldUser").cnt(oldUserCnt)
+                .ratio(Math.round(((double) oldUserCnt / totalUserCnt) * 100.0) / 100.0).build());
+
+        // 浏览器访问详情
+        List<LinkBrowserStatsDO> linkBrowserStatsDOS = linkBrowserStatsMapper.queryBrowserStatsBySingleShortLink(req);
+        int browserSum = linkBrowserStatsDOS.stream().mapToInt(LinkBrowserStatsDO::getCnt).sum();
+        List<ShortLinkStatsBrowserRespDTO> browserStats = linkBrowserStatsDOS.stream()
+                .collect(Collectors.toMap(LinkBrowserStatsDO::getBrowser, LinkBrowserStatsDO::getCnt))
+                .entrySet().stream()
+                .map(entry -> {
+                    double ratio = Math.round(((double) entry.getValue() / browserSum) * 100.0) / 100.0;
+                    return ShortLinkStatsBrowserRespDTO.builder()
+                            .browser(entry.getKey())
+                            .cnt(entry.getValue())
+                            .ratio(ratio)
+                            .build();
+                }).toList();
+
+        // 操作系统访问详情
+        List<LinkOsStatsDO> linkOsStatsDOS = linkOsStatsMapper.queryOsStatsBySingleShortLink(req);
+        int osSum = linkOsStatsDOS.stream().mapToInt(LinkOsStatsDO::getCnt).sum();
+        List<ShortLinkStatsOsRespDTO> osStats = linkOsStatsDOS.stream()
+                .collect(Collectors.toMap(LinkOsStatsDO::getOs, LinkOsStatsDO::getCnt))
+                .entrySet().stream()
+                .map(entry -> {
+                    double ratio = Math.round(((double) entry.getValue() / osSum) * 100.0) / 100.0;
+                    return ShortLinkStatsOsRespDTO.builder()
+                            .os(entry.getKey())
+                            .cnt(entry.getValue())
+                            .ratio(ratio)
+                            .build();
+                }).toList();
+
+        // 设备类型访问详情
+        List<LinkDeviceStatsDO> linkDeviceStatsDOS = linkDeviceStatsMapper.queryDeviceStatsBySingleShortLink(req);
+        int deviceSum = linkDeviceStatsDOS.stream().mapToInt(LinkDeviceStatsDO::getCnt).sum();
+        List<ShortLinkStatsDeviceRespDTO> deviceStats = linkDeviceStatsDOS.stream()
+                .collect(Collectors.toMap(LinkDeviceStatsDO::getDevice, LinkDeviceStatsDO::getCnt))
+                .entrySet().stream()
+                .map(entry -> {
+                    double ratio = Math.round(((double) entry.getValue() / deviceSum) * 100.0) / 100.0;
+                    return ShortLinkStatsDeviceRespDTO.builder()
+                            .device(entry.getKey())
+                            .cnt(entry.getValue())
+                            .ratio(ratio)
+                            .build();
+                }).toList();
+
+        // 网络类型访问详情
+        List<LinkNetworkStatsDO> linkNetworkStatsDOS = linkNetworkStatsMapper.queryNetworkStatsBySingleShortLink(req);
+        int networkSum = linkNetworkStatsDOS.stream().mapToInt(LinkNetworkStatsDO::getCnt).sum();
+        List<ShortLinkStatsNetworkRespDTO> networkStats = linkNetworkStatsDOS.stream()
+                .collect(Collectors.toMap(LinkNetworkStatsDO::getNetwork, LinkNetworkStatsDO::getCnt))
+                .entrySet().stream()
+                .map(entry -> {
+                    double ratio = Math.round(((double) entry.getValue() / networkSum) * 100.0) / 100.0;
+                    return ShortLinkStatsNetworkRespDTO.builder()
+                            .network(entry.getKey())
+                            .cnt(entry.getValue())
+                            .ratio(ratio)
+                            .build();
+                }).toList();
+
+        return ShortLinkStatsRespDTO.builder()
+                .pv(totalPv)
+                .uv(totalUv)
+                .uip(totalUip)
+                .daily(dailyStats)
+                .localeCnStats(localeStats)
+                .hourStats(hourStats)
+                .weekdayStats(weekdayStats)
+                .topIpStats(topIpStats)
+                .uvTypeStats(uvTypeStats)
+                .deviceStats(deviceStats)
+                .networkStats(networkStats)
+                .browserStats(browserStats)
+                .osStats(osStats)
+                .build();
+    }
+}

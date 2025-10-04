@@ -1,11 +1,57 @@
 package org.cabbage.shortlink.project.dao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
+import org.cabbage.shortlink.project.dao.bo.ShortLinkStatsAccessLogBO;
 import org.cabbage.shortlink.project.dao.entity.LinkAccessLogsDO;
+import org.cabbage.shortlink.project.dto.req.ShortLinkStatsReqDTO;
+
+import java.util.List;
 
 /**
  * @author xzcabbage
  * @since 2025/10/4
  */
 public interface LinkAccessLogsMapper extends BaseMapper<LinkAccessLogsDO> {
+
+    /**
+     * 根据短链接获取指定日期内高频访问IP数据
+     */
+    @Select("SELECT " +
+            "    ip, " +
+            "    COUNT(ip) AS cnt " +
+            "FROM " +
+            "    t_link_access_logs " +
+            "WHERE " +
+            "    full_short_url = #{fullShortUrl} " +
+            "    AND gid = #{param.gid} " +
+            "    AND create_time >= #{startDate} " +
+            "    AND create_time < DATE_ADD(#{endDate}, INTERVAL 1 DAY) " +
+            "GROUP BY " +
+            "    full_short_url, gid, ip " +
+            "ORDER BY " +
+            "    count DESC " +
+            "LIMIT 5;")
+    List<ShortLinkStatsAccessLogBO> listTop5IpByShortLink(ShortLinkStatsReqDTO requestParam);
+
+    /**
+     * 根据短链接获取指定日期内新旧访客数据
+     */
+    @Select("SELECT " +
+            "    SUM(old_user) AS oldUserCnt, " +
+            "    SUM(new_user) AS newUserCnt " +
+            "FROM ( " +
+            "    SELECT " +
+            "        CASE WHEN COUNT(DISTINCT DATE(create_time)) > 1 THEN 1 ELSE 0 END AS old_user, " +
+            "        CASE WHEN COUNT(DISTINCT DATE(create_time)) = 1 AND MAX(create_time) >= #{startDate} AND MAX(create_time) <= #{endDate} THEN 1 ELSE 0 END AS new_user " +
+            "    FROM " +
+            "        t_link_access_logs " +
+            "    WHERE " +
+            "        full_short_url = #{fullShortUrl} " +
+            "        AND gid = #{gid} " +
+            "    GROUP BY " +
+            "        user " +
+            ") AS user_counts;")
+    ShortLinkStatsAccessLogBO findUvTypeCntByShortLink(@Param("param") ShortLinkStatsReqDTO requestParam);
 }
