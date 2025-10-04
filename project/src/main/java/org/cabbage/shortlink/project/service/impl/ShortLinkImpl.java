@@ -27,6 +27,7 @@ import org.cabbage.shortlink.project.dao.entity.LinkBrowserStatsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkDeviceStatsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkGotoDO;
 import org.cabbage.shortlink.project.dao.entity.LinkLocaleStatsDO;
+import org.cabbage.shortlink.project.dao.entity.LinkNetworkStatsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkOsStatsDO;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
 import org.cabbage.shortlink.project.dao.mapper.LinkAccessLogsMapper;
@@ -34,6 +35,7 @@ import org.cabbage.shortlink.project.dao.mapper.LinkAccessStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkBrowserStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkDeviceStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkLocaleStatsMapper;
+import org.cabbage.shortlink.project.dao.mapper.LinkNetworkStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkOsStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.ShortLinkMapper;
 import org.cabbage.shortlink.project.dto.req.ShortLinkCreateReqDTO;
@@ -104,6 +106,7 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
     private final LinkBrowserStatsMapper linkBrowserStatsMapper;
     private final LinkAccessLogsMapper linkAccessLogsMapper;
     private final LinkDeviceStatsMapper linkDeviceStatsMapper;
+    private final LinkNetworkStatsMapper linkNetworkStatsMapper;
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedissonClient redissonClient;
@@ -427,6 +430,18 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                 .cnt(1)
                 .device(ReqUtil.getDevice(req))
                 .build();
+        linkDeviceStatsMapper.insertOrUpdate(deviceStatsDO);
+
+        // 监控网络
+        LinkNetworkStatsDO networkStatsDO = LinkNetworkStatsDO.builder()
+                .fullShortUrl(fullShortUrl)
+                .gid(gid)
+                .date(today)
+                .cnt(1)
+                .network(ReqUtil.getNetwork(req))
+                .build();
+        linkNetworkStatsMapper.insertOrUpdate(networkStatsDO);
+
     }
 
     private String generateShortUrl(ShortLinkCreateReqDTO req) {
