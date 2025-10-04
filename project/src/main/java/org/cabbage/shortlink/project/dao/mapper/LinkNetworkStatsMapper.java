@@ -14,7 +14,7 @@ public interface LinkNetworkStatsMapper extends BaseMapper<LinkNetworkStatsDO> {
      * 插入或更新操作系统访问统计
      * 如果记录存在(根据唯一索引: full_short_url, gid, date, network)则累加访问量，否则插入新记录
      */
-    @Insert("INSERT INTO t_link_os_stats " +
+    @Insert("INSERT INTO t_link_network_stats " +
             "(full_short_url, gid, date, cnt, netwrok, create_time, update_time, del_flag) " +
             "VALUES " +
             "(#{fullShortUrl}, #{gid}, #{date}, #{cnt}, #{netwrok}, NOW(), NOW(), 0) " +

@@ -14,7 +14,7 @@ public interface LinkDeviceStatsMapper extends BaseMapper<LinkDeviceStatsDO> {
      * 插入或更新操作系统访问统计
      * 如果记录存在(根据唯一索引: full_short_url, gid, date, device)则累加访问量，否则插入新记录
      */
-    @Insert("INSERT INTO t_link_os_stats " +
+    @Insert("INSERT INTO t_link_device_stats " +
             "(full_short_url, gid, date, cnt, device, create_time, update_time, del_flag) " +
             "VALUES " +
             "(#{fullShortUrl}, #{gid}, #{date}, #{cnt}, #{device}, NOW(), NOW(), 0) " +
