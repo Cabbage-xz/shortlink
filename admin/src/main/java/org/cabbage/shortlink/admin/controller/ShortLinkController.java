@@ -1,16 +1,22 @@
 package org.cabbage.shortlink.admin.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.cabbage.shortlink.admin.remote.ShortLinkRemoteService;
+import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkBaseInfoRespDTO;
+import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkBatchCreateRespDTO;
+import org.cabbage.shortlink.admin.toolkit.EasyExcelWebUtil;
+import org.cabbage.shortlink.common.convention.result.Result;
+import org.cabbage.shortlink.common.convention.result.Results;
+import org.cabbage.shortlink.common.dto.req.ShortLinkBatchCreateReqDTO;
 import org.cabbage.shortlink.common.dto.req.ShortLinkCreateReqDTO;
 import org.cabbage.shortlink.common.dto.req.ShortLinkPageReqDTO;
 import org.cabbage.shortlink.common.dto.req.ShortLinkUpdateReqDTO;
 import org.cabbage.shortlink.common.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.common.dto.resp.ShortLinkCreateRespDTO;
 import org.cabbage.shortlink.common.dto.resp.ShortLinkPageRespDTO;
-import org.cabbage.shortlink.common.convention.result.Result;
-import org.cabbage.shortlink.common.convention.result.Results;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -40,6 +46,19 @@ public class ShortLinkController {
     @RequestMapping(value = "/api/short-link/admin/v1/create", method = RequestMethod.POST)
     public Result<ShortLinkCreateRespDTO> createShortLink(@RequestBody ShortLinkCreateReqDTO req) {
         return shortLinkRemoteService.createShortLink(req);
+    }
+
+    /**
+     * 批量创建短链接
+     */
+    @SneakyThrows
+    @RequestMapping(value = "/api/short-link/admin/v1/create/batch", method = RequestMethod.POST)
+    public void batchCreateShortLink(@RequestBody ShortLinkBatchCreateReqDTO requestParam, HttpServletResponse response) {
+        Result<ShortLinkBatchCreateRespDTO> shortLinkBatchCreateRespDTOResult = shortLinkRemoteService.batchCreateShortLink(requestParam);
+        if (shortLinkBatchCreateRespDTOResult.isSuccess()) {
+            List<ShortLinkBaseInfoRespDTO> baseLinkInfos = shortLinkBatchCreateRespDTOResult.getData().getBaseLinkInfos();
+            EasyExcelWebUtil.write(response, "批量创建短链接-SaaS短链接系统", ShortLinkBaseInfoRespDTO.class, baseLinkInfos);
+        }
     }
 
     /**

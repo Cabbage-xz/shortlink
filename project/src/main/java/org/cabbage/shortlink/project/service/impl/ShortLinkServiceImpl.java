@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.cabbage.shortlink.common.convention.exception.ServiceException;
+import org.cabbage.shortlink.common.dto.req.ShortLinkBatchCreateReqDTO;
 import org.cabbage.shortlink.common.dto.req.ShortLinkCreateReqDTO;
 import org.cabbage.shortlink.common.dto.req.ShortLinkPageReqDTO;
 import org.cabbage.shortlink.common.dto.req.ShortLinkUpdateReqDTO;
@@ -46,6 +47,8 @@ import org.cabbage.shortlink.project.dao.mapper.LinkNetworkStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkOsStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkStatsTodayMapper;
 import org.cabbage.shortlink.project.dao.mapper.ShortLinkMapper;
+import org.cabbage.shortlink.project.dto.req.ShortLinkBaseInfoRespDTO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkBatchCreateRespDTO;
 import org.cabbage.shortlink.project.service.LinkGotoService;
 import org.cabbage.shortlink.project.service.ShortLinkService;
 import org.cabbage.shortlink.project.toolkit.HashUtil;
@@ -59,14 +62,17 @@ import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
+import org.springframework.data.redis.core.RedisCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -155,6 +161,100 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .gid(req.getGid())
                 .originUrl(req.getOriginUrl())
                 .fullShortUrl("http://" + fullShortUrl)
+                .build();
+    }
+
+    /**
+     * 批量创建短链接
+     * @param req 创建请求实体
+     * @return 响应
+     */
+    @Transactional
+    @Override
+    public ShortLinkBatchCreateRespDTO batchCreateShortLink(ShortLinkBatchCreateReqDTO req) {
+        List<String> originUrls = req.getOriginUrls();
+        List<String> describes = req.getDescriptions();
+
+        // 1. 准备批量数据
+        List<ShortLinkDO> linkDOList = new ArrayList<>();
+        List<LinkGotoDO> gotoList = new ArrayList<>();
+        List<ShortLinkBaseInfoRespDTO> result = new ArrayList<>();
+        Map<String, String> redisCache = new HashMap<>();
+        List<String> bloomFilterKeys = new ArrayList<>();
+
+        for (int i = 0; i < originUrls.size(); i++) {
+            try {
+                String originUrl = originUrls.get(i);
+                String description = describes.get(i);
+
+                // 生成短链接
+                ShortLinkCreateReqDTO tempReq = BeanUtil.toBean(req, ShortLinkCreateReqDTO.class);
+                tempReq.setOriginUrl(originUrl);
+                tempReq.setDescription(description);
+
+                String shortUri = generateShortUrl(tempReq);
+                String fullShortUrl = defaultDomain + "/" + shortUri;
+
+                // 构建 ShortLinkDO
+                ShortLinkDO linkDO = BeanUtil.toBean(tempReq, ShortLinkDO.class);
+                linkDO.setDomain(defaultDomain);
+                linkDO.setShortUri(shortUri);
+                linkDO.setFullShortUrl(fullShortUrl);
+                linkDO.setFavicon(getFavicon(originUrl));
+                linkDO.setTotalPv(0);
+                linkDO.setTotalUv(0);
+                linkDO.setTotalUip(0);
+                linkDOList.add(linkDO);
+
+                // 构建 LinkGotoDO
+                LinkGotoDO gotoDO = LinkGotoDO.builder()
+                        .fullShortUrl(fullShortUrl)
+                        .gid(req.getGid())
+                        .build();
+                gotoList.add(gotoDO);
+
+                // 准备 Redis 缓存数据
+                String redisKey = String.format(GOTO_SHORT_LINK_KEY, fullShortUrl);
+                redisCache.put(redisKey, originUrl);
+
+                // 准备布隆过滤器数据
+                bloomFilterKeys.add(fullShortUrl);
+
+                // 构建响应
+                ShortLinkBaseInfoRespDTO linkBaseInfoRespDTO = ShortLinkBaseInfoRespDTO.builder()
+                        .fullShortUrl("http://" + fullShortUrl)
+                        .originUrl(originUrl)
+                        .describe(description)
+                        .build();
+                result.add(linkBaseInfoRespDTO);
+
+            } catch (Exception ex) {
+                log.error("批量创建短链接失败，原始参数：{}", originUrls.get(i), ex);
+            }
+        }
+
+        // 2. 批量插入数据库
+        if (!linkDOList.isEmpty()) {
+            try {
+                // MyBatis-Plus 批量插入（单次SQL）
+                this.saveBatch(linkDOList);
+                linkGotoService.saveBatch(gotoList);
+
+                // 3. 批量写入 Redis（使用 Pipeline）
+                batchSetRedisCache(redisCache, req.getValidDate());
+
+                // 4. 批量添加到布隆过滤器
+                bloomFilterKeys.forEach(shortUriCachePenetrationBloomFilter::add);
+
+            } catch (DuplicateKeyException exception) {
+                log.error("批量创建短链接出现重复", exception);
+                throw new ServiceException("存在重复的短链接");
+            }
+        }
+
+        return ShortLinkBatchCreateRespDTO.builder()
+                .total(result.size())
+                .baseLinkInfos(result)
                 .build();
     }
 
@@ -511,5 +611,39 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             }
         }
         return null;
+    }
+
+    /**
+     * 批量设置 Redis 缓存（使用 Pipeline）
+     */
+    private void batchSetRedisCache(Map<String, String> cacheMap, LocalDateTime validDate) {
+        long expireTime = LinkUtil.getLinkCacheValidTime(validDate);
+        long expireSeconds = expireTime / 1000;
+
+        stringRedisTemplate.executePipelined((RedisCallback<Object>) connection -> {
+            cacheMap.forEach((key, value) -> {
+                byte[] keyBytes = key.getBytes(StandardCharsets.UTF_8);
+                byte[] valueBytes = value.getBytes(StandardCharsets.UTF_8);
+
+                // 使用 stringCommands()
+                connection.stringCommands().setEx(keyBytes, expireSeconds, valueBytes);
+            });
+            return null;
+        });
+
+        /*long expireTime = LinkUtil.getLinkCacheValidTime(validDate);
+        Duration duration = Duration.ofMillis(expireTime);
+
+        // 使用 SessionCallback
+        stringRedisTemplate.executePipelined(new SessionCallback<Object>() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public Object execute(RedisOperations operations) throws DataAccessException {
+                cacheMap.forEach((key, value) ->
+                        operations.opsForValue().set(key, value, duration)
+                );
+                return null;
+            }
+        });*/
     }
 }

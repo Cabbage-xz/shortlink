@@ -7,10 +7,12 @@ import com.alibaba.fastjson2.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkGroupStatsAccessRecordReqDTO;
 import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkStatsAccessRecordReqDTO;
+import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkBatchCreateRespDTO;
 import org.cabbage.shortlink.common.convention.result.Result;
 import org.cabbage.shortlink.common.dto.req.RecycleBinRecoverReqDTO;
 import org.cabbage.shortlink.common.dto.req.RecycleBinRemoveReqDTO;
 import org.cabbage.shortlink.common.dto.req.RecycleBinSaveReqDTO;
+import org.cabbage.shortlink.common.dto.req.ShortLinkBatchCreateReqDTO;
 import org.cabbage.shortlink.common.dto.req.ShortLinkCreateReqDTO;
 import org.cabbage.shortlink.common.dto.req.ShortLinkGroupStatsReqDTO;
 import org.cabbage.shortlink.common.dto.req.ShortLinkPageReqDTO;
@@ -44,6 +46,18 @@ public interface ShortLinkRemoteService {
     default Result<ShortLinkCreateRespDTO> createShortLink(ShortLinkCreateReqDTO req) {
         String resultBody = HttpUtil.post("http://127.0.0.1:8001/api/short-link/v1/create", JSON.toJSONString(req));
         return JSON.parseObject(resultBody, new TypeReference<>() {
+        });
+    }
+
+    /**
+     * 批量创建短链接
+     *
+     * @param requestParam 批量创建短链接请求参数
+     * @return 短链接批量创建响应
+     */
+    default Result<ShortLinkBatchCreateRespDTO> batchCreateShortLink(ShortLinkBatchCreateReqDTO requestParam) {
+        String resultBodyStr = HttpUtil.post("http://127.0.0.1:8001/api/short-link/v1/create/batch", JSON.toJSONString(requestParam));
+        return JSON.parseObject(resultBodyStr, new TypeReference<>() {
         });
     }
 

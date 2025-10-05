@@ -26,4 +26,11 @@ short-link:
 mybatis-plus:
   configuration:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # 批量插入时每批次的大小
+    default-batch-size: 1000
   mapper-locations: classpath*:/mapper/**/*.xml
+  global-config:
+    db-config:
+      # 批量插入策略
+      insert-strategy: not_null
+

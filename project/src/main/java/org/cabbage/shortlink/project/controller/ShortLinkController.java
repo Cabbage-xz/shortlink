@@ -6,12 +6,14 @@ import jakarta.servlet.ServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.common.convention.result.Result;
 import org.cabbage.shortlink.common.convention.result.Results;
+import org.cabbage.shortlink.common.dto.req.ShortLinkBatchCreateReqDTO;
 import org.cabbage.shortlink.common.dto.req.ShortLinkCreateReqDTO;
 import org.cabbage.shortlink.common.dto.req.ShortLinkPageReqDTO;
 import org.cabbage.shortlink.common.dto.req.ShortLinkUpdateReqDTO;
 import org.cabbage.shortlink.common.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.common.dto.resp.ShortLinkCreateRespDTO;
 import org.cabbage.shortlink.common.dto.resp.ShortLinkPageRespDTO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkBatchCreateRespDTO;
 import org.cabbage.shortlink.project.service.ShortLinkService;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,6 +44,16 @@ public class ShortLinkController {
     @RequestMapping(value = "/api/short-link/v1/create", method = RequestMethod.POST)
     public Result<ShortLinkCreateRespDTO> createShortLink(@RequestBody ShortLinkCreateReqDTO req) {
         return Results.success(shortLinkService.createShortLink(req));
+    }
+
+    /**
+     * 批量创建短链接
+     * @param req 创建请求实体
+     * @return 响应
+     */
+    @RequestMapping(value = "/api/short-link/v1/create/batch", method = RequestMethod.POST)
+    public Result<ShortLinkBatchCreateRespDTO> batchCreateShortLink(@RequestBody ShortLinkBatchCreateReqDTO req) {
+        return Results.success(shortLinkService.batchCreateShortLink(req));
     }
 
     /**

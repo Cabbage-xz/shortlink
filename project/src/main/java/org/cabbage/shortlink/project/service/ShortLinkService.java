@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
+import org.cabbage.shortlink.common.dto.req.ShortLinkBatchCreateReqDTO;
 import org.cabbage.shortlink.common.dto.req.ShortLinkCreateReqDTO;
 import org.cabbage.shortlink.common.dto.req.ShortLinkPageReqDTO;
 import org.cabbage.shortlink.common.dto.req.ShortLinkUpdateReqDTO;
@@ -11,6 +12,7 @@ import org.cabbage.shortlink.common.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.common.dto.resp.ShortLinkCreateRespDTO;
 import org.cabbage.shortlink.common.dto.resp.ShortLinkPageRespDTO;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkBatchCreateRespDTO;
 
 import java.util.List;
 
@@ -28,6 +30,14 @@ public interface ShortLinkService extends IService<ShortLinkDO> {
      * @return 短链接响应
      */
     ShortLinkCreateRespDTO createShortLink(ShortLinkCreateReqDTO req);
+
+    /**
+     * 批量创建短链接
+     * @param req 创建请求实体
+     * @return 响应
+     */
+    ShortLinkBatchCreateRespDTO batchCreateShortLink(ShortLinkBatchCreateReqDTO req);
+
 
     /**
      * 修改短链接
