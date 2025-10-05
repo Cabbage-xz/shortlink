@@ -315,6 +315,18 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             save(insertDO);
             linkGotoService.save(LinkGotoDO.builder().gid(req.getGid()).fullShortUrl(req.getFullShortUrl()).build());
         }
+
+        if (Objects.equals(req.getValidDateType(), one.getValidDateType()) &&
+                Objects.equals(req.getValidDate(), one.getValidDate())) {
+            return;
+        }
+        stringRedisTemplate.delete(String.format(GOTO_SHORT_LINK_KEY, req.getFullShortUrl()));
+        if (one.getValidDate() == null || !one.getValidDate().isBefore(LocalDateTime.now())) {
+            return;
+        }
+        if (Objects.equals(req.getValidDateType(), ValidDateTypeEnum.PERMANENT.getType()) || req.getValidDate().isAfter(LocalDateTime.now())) {
+            stringRedisTemplate.delete(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, req.getFullShortUrl()));
+        }
     }
 
     /**
