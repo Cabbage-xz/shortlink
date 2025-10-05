@@ -1,6 +1,7 @@
 package org.cabbage.shortlink.project.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import org.cabbage.shortlink.project.dto.req.ShortLinkGroupStatsAccessRecordReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkGroupStatsReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkStatsAccessRecordReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkStatsReqDTO;
@@ -33,4 +34,11 @@ public interface ShortLinkStatsService {
      * @return 访问情况
      */
     IPage<ShortLinkStatsAccessRecordRespDTO> shortLInkStatsAccessRecord(ShortLinkStatsAccessRecordReqDTO req);
+
+    /**
+     * 监控分组短链接访问记录
+     * @param req 监控访问请求
+     * @return 访问情况
+     */
+    IPage<ShortLinkStatsAccessRecordRespDTO> shortLInkGroupStatsAccessRecord(ShortLinkGroupStatsAccessRecordReqDTO req);
 }

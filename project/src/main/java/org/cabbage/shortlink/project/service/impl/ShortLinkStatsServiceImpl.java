@@ -19,6 +19,7 @@ import org.cabbage.shortlink.project.dao.mapper.LinkDeviceStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkLocaleStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkNetworkStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkOsStatsMapper;
+import org.cabbage.shortlink.project.dto.req.ShortLinkGroupStatsAccessRecordReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkGroupStatsReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkStatsAccessRecordReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkStatsReqDTO;
@@ -402,5 +403,37 @@ public class ShortLinkStatsServiceImpl implements ShortLinkStatsService {
         });
         return actualResult;
 
+    }
+
+    /**
+     * 监控分组短链接访问记录
+     * @param req 监控访问请求
+     * @return 访问情况
+     */
+    @Override
+    public IPage<ShortLinkStatsAccessRecordRespDTO> shortLInkGroupStatsAccessRecord(ShortLinkGroupStatsAccessRecordReqDTO req) {
+        IPage<LinkAccessLogsDO> linkAccessLogsDOIPage = linkAccessLogsMapper.selectPage(req, new LambdaQueryWrapper<LinkAccessLogsDO>()
+                .eq(LinkAccessLogsDO::getGid, req.getGid())
+                .between(LinkAccessLogsDO::getCreateTime, req.getStartDate(), req.getEndDate().plusDays(1)));
+        IPage<ShortLinkStatsAccessRecordRespDTO> actualResult = linkAccessLogsDOIPage
+                .convert(each -> BeanUtil.toBean(each, ShortLinkStatsAccessRecordRespDTO.class));
+        if (actualResult.getRecords().isEmpty()) {
+            return actualResult;
+        }
+        List<String> userAccessLogsList = actualResult.getRecords().stream()
+                .map(ShortLinkStatsAccessRecordRespDTO::getUser).toList();
+        List<Map<String, Object>> uvTypeList = linkAccessLogsMapper.selectGroupUvTypeByUsers(
+                req.getGid(), req.getStartDate(),
+                req.getEndDate().plusDays(1), userAccessLogsList);
+        actualResult.getRecords().forEach(record -> {
+            String uvType = uvTypeList.stream()
+                    .filter(item -> Objects.equals(item.get("user"), record.getUser()))
+                    .findFirst()
+                    .map(item -> item.get("uvType"))
+                    .map(Object::toString)
+                    .orElse("旧访客");
+            record.setUvType(uvType);
+        });
+        return actualResult;
     }
 }
