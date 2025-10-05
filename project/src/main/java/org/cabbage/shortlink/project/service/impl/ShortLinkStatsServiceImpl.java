@@ -70,9 +70,10 @@ public class ShortLinkStatsServiceImpl implements ShortLinkStatsService {
             return null;
         }
 
-        int totalPv = linkAccessStatsDOS.stream().mapToInt(LinkAccessStatsDO::getPv).sum();
-        int totalUv = linkAccessStatsDOS.stream().mapToInt(LinkAccessStatsDO::getUv).sum();
-        int totalUip = linkAccessStatsDOS.stream().mapToInt(LinkAccessStatsDO::getUip).sum();
+        LinkAccessStatsDO pvUvUipStatsBySingleShortLink = linkAccessLogsMapper.findPvUvUipStatsBySingleShortLink(req);
+        int totalPv = pvUvUipStatsBySingleShortLink.getPv();
+        int totalUv = pvUvUipStatsBySingleShortLink.getUv();
+        int totalUip = pvUvUipStatsBySingleShortLink.getUip();
 
         // 查询请求范围内是否有相关使用记录
         Map<LocalDate, ShortLinkStatsAccessDailyRespDTO> shortLinkStatsAccessDateMap = linkAccessStatsDOS

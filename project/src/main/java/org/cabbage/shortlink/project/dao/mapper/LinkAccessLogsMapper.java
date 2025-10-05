@@ -5,6 +5,7 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.cabbage.shortlink.project.dao.bo.ShortLinkStatsAccessLogBO;
 import org.cabbage.shortlink.project.dao.entity.LinkAccessLogsDO;
+import org.cabbage.shortlink.project.dao.entity.LinkAccessStatsDO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkStatsReqDTO;
 
 import java.time.LocalDate;
@@ -83,4 +84,21 @@ public interface LinkAccessLogsMapper extends BaseMapper<LinkAccessLogsDO> {
                                                   @Param("startDate") LocalDate startDate,
                                                   @Param("endDate") LocalDate endDate,
                                                   @Param("userAccessLogsList") List<String> userAccessLogsList);
+
+    @Select("SELECT " +
+            "   full_short_url, " +
+            "   gid, " +
+            "   COUNT(user) AS pv, " +
+            "   COUNT(DISTINCT user) AS uv, " +
+            "   COUNT(DISTINCT ip) AS uip " +
+            "FROM " +
+            "   t_link_access_logs " +
+            "WHERE " +
+            "   full_short_url = #{fullShortUrl} " +
+            "   AND gid = #{gid} " +
+            "   AND create_time >= #{startDate} " +
+            "   AND create_time < DATE_ADD(#{endDate}, INTERVAL 1 DAY) " +
+            "GROUP BY " +
+            "   full_short_url, gid;")
+    LinkAccessStatsDO findPvUvUipStatsBySingleShortLink(ShortLinkStatsReqDTO req);
 }
