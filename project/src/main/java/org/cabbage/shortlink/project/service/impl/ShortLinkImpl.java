@@ -420,6 +420,9 @@ public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> imp
                 .gid(gid)
                 .ip(remoteAddr)
                 .os(ReqUtil.getOs(req))
+                .network(ReqUtil.getNetwork(req))
+                .device(ReqUtil.getDevice(req))
+                .locale(StrUtil.join("-", "China", province, localeResultObj.getString("city")))
                 .browser(ReqUtil.getBrowser(req))
                 .build();
         linkAccessLogsMapper.insert(accessLogsDO);
