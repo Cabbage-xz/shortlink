@@ -1,5 +1,6 @@
 package org.cabbage.shortlink.project.dao.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
@@ -103,4 +104,22 @@ public class ShortLinkDO extends BaseDO {
      */
     private Integer totalUip;
 
+
+    /**
+     * 今日PV
+     */
+    @TableField(exist = false)
+    private Integer todayPv;
+
+    /**
+     * 今日UV
+     */
+    @TableField(exist = false)
+    private Integer todayUv;
+
+    /**
+     * 今日UIP
+     */
+    @TableField(exist = false)
+    private Integer todayUip;
 }

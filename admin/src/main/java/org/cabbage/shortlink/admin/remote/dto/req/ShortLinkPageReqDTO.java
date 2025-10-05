@@ -19,5 +19,5 @@ public class ShortLinkPageReqDTO extends Page {
     /**
      * 排序标签
      */
-    private String orderByTag;
+    private String orderTag;
 }

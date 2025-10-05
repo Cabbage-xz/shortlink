@@ -1,9 +1,11 @@
 package org.cabbage.shortlink.project.dao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Update;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
+import org.cabbage.shortlink.project.dto.req.ShortLinkPageReqDTO;
 
 /**
  * @author xzcabbage
@@ -29,4 +31,9 @@ public interface ShortLinkMapper extends BaseMapper<ShortLinkDO> {
                         @Param("totalPv") int totalPv,
                         @Param("totalUv") int totalUv,
                         @Param("totalUip") int totalUip);
+
+    /**
+     * 分页统计短链接
+     */
+    IPage<ShortLinkDO> pageLink(ShortLinkPageReqDTO requestParam);
 }
