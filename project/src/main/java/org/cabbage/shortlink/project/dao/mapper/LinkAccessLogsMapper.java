@@ -7,7 +7,9 @@ import org.cabbage.shortlink.project.dao.bo.ShortLinkStatsAccessLogBO;
 import org.cabbage.shortlink.project.dao.entity.LinkAccessLogsDO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkStatsReqDTO;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author xzcabbage
@@ -54,4 +56,31 @@ public interface LinkAccessLogsMapper extends BaseMapper<LinkAccessLogsDO> {
             "        user " +
             ") AS user_counts;")
     ShortLinkStatsAccessLogBO findUvTypeCntByShortLink(@Param("param") ShortLinkStatsReqDTO requestParam);
+
+
+    @Select("<script> " +
+            "SELECT " +
+            "    user, " +
+            "    CASE " +
+            "        WHEN MIN(create_time) BETWEEN #{startDate} AND #{endDate} THEN '新访客' " +
+            "        ELSE '老访客' " +
+            "    END AS uvType " +
+            "FROM " +
+            "    t_link_access_logs " +
+            "WHERE " +
+            "    full_short_url = #{fullShortUrl} " +
+            "    AND gid = #{gid} " +
+            "    AND user IN " +
+            "    <foreach item='item' index='index' collection='userAccessLogsList' open='(' separator=',' close=')'> " +
+            "        #{item} " +
+            "    </foreach> " +
+            "GROUP BY " +
+            "    user;" +
+            "    </script>"
+    )
+    List<Map<String, Object>> selectUvTypeByUsers(@Param("gid") String gid,
+                                                  @Param("fullShortUrl") String fullShortUrl,
+                                                  @Param("startDate") LocalDate startDate,
+                                                  @Param("endDate") LocalDate endDate,
+                                                  @Param("userAccessLogsList") List<String> userAccessLogsList);
 }

@@ -1,8 +1,11 @@
 package org.cabbage.shortlink.project.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.project.dao.bo.ShortLinkStatsAccessLogBO;
+import org.cabbage.shortlink.project.dao.entity.LinkAccessLogsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkAccessStatsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkBrowserStatsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkDeviceStatsDO;
@@ -16,8 +19,10 @@ import org.cabbage.shortlink.project.dao.mapper.LinkDeviceStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkLocaleStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkNetworkStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkOsStatsMapper;
+import org.cabbage.shortlink.project.dto.req.ShortLinkStatsAccessRecordReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkStatsReqDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkStatsAccessDailyRespDTO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkStatsAccessRecordRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkStatsBrowserRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkStatsDeviceRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkStatsLocaleCNRespDTO;
@@ -34,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -204,5 +210,40 @@ public class ShortLinkStatsServiceImpl implements ShortLinkStatsService {
                 .browserStats(browserStats)
                 .osStats(osStats)
                 .build();
+    }
+
+
+    /**
+     * 监控单个短链接访问记录
+     * @param req 监控访问请求
+     * @return 访问情况
+     */
+    @Override
+    public IPage<ShortLinkStatsAccessRecordRespDTO> shortLInkStatsAccessRecord(ShortLinkStatsAccessRecordReqDTO req) {
+        IPage<LinkAccessLogsDO> linkAccessLogsDOIPage = linkAccessLogsMapper.selectPage(req, new LambdaQueryWrapper<LinkAccessLogsDO>()
+                .eq(LinkAccessLogsDO::getFullShortUrl, req.getFullShortUrl())
+                .eq(LinkAccessLogsDO::getGid, req.getGid())
+                .between(LinkAccessLogsDO::getCreateTime, req.getStartDate(), req.getEndDate().plusDays(1)));
+        IPage<ShortLinkStatsAccessRecordRespDTO> actualResult = linkAccessLogsDOIPage
+                .convert(each -> BeanUtil.toBean(each, ShortLinkStatsAccessRecordRespDTO.class));
+        if (actualResult.getRecords().isEmpty()) {
+            return actualResult;
+        }
+        List<String> userAccessLogsList = actualResult.getRecords().stream()
+                .map(ShortLinkStatsAccessRecordRespDTO::getUser).toList();
+        List<Map<String, Object>> uvTypeList = linkAccessLogsMapper.selectUvTypeByUsers(
+                req.getGid(), req.getFullShortUrl(), req.getStartDate(),
+                req.getEndDate().plusDays(1), userAccessLogsList);
+        actualResult.getRecords().forEach(record -> {
+            String uvType = uvTypeList.stream()
+                    .filter(item -> Objects.equals(item.get("user"), record.getUser()))
+                    .findFirst()
+                    .map(item -> item.get("uvType"))
+                    .map(Object::toString)
+                    .orElse("旧访客");
+            record.setUvType(uvType);
+        });
+        return actualResult;
+
     }
 }

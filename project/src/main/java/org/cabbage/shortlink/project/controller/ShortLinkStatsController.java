@@ -1,9 +1,12 @@
 package org.cabbage.shortlink.project.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.common.convention.result.Result;
 import org.cabbage.shortlink.common.convention.result.Results;
+import org.cabbage.shortlink.project.dto.req.ShortLinkStatsAccessRecordReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkStatsReqDTO;
+import org.cabbage.shortlink.project.dto.resp.ShortLinkStatsAccessRecordRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkStatsRespDTO;
 import org.cabbage.shortlink.project.service.ShortLinkStatsService;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,5 +33,16 @@ public class ShortLinkStatsController {
     @RequestMapping(value = "/api/short-link/v1/stats", method = RequestMethod.GET)
     public Result<ShortLinkStatsRespDTO> shortLInkStats(ShortLinkStatsReqDTO req) {
         return Results.success(shortLinkStatsService.singleShortLinkStats(req));
+    }
+
+
+    /**
+     * 监控单个短链接访问记录
+     * @param req 监控访问请求
+     * @return 访问情况
+     */
+    @RequestMapping(value = "/api/short-link/v1/stats/access-record", method = RequestMethod.GET)
+    public Result<IPage<ShortLinkStatsAccessRecordRespDTO>> shortLInkStatsAccessRecord(ShortLinkStatsAccessRecordReqDTO req) {
+        return Results.success(shortLinkStatsService.shortLInkStatsAccessRecord(req));
     }
 }
