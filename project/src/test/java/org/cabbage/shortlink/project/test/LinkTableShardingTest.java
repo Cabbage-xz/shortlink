@@ -30,7 +30,7 @@ public class LinkTableShardingTest {
             "    del_flag        tinyint(1)                                               null comment '删除标识 0:未删除 1:已删除',\n" +
             "    del_time        bigint                                                   null,\n" +
             "    constraint idx_unique_full_short_url\n" +
-            "        unique (full_short_url)\n" +
+            "        unique (full_short_url, del_time)\n" +
             ");";
 
     public static final String SQL_GROUP = "create table t_group_%d\n" +
