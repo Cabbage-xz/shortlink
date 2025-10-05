@@ -29,6 +29,7 @@ import org.cabbage.shortlink.project.dao.entity.LinkGotoDO;
 import org.cabbage.shortlink.project.dao.entity.LinkLocaleStatsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkNetworkStatsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkOsStatsDO;
+import org.cabbage.shortlink.project.dao.entity.LinkStatsTodayDO;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
 import org.cabbage.shortlink.project.dao.mapper.LinkAccessLogsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkAccessStatsMapper;
@@ -37,6 +38,7 @@ import org.cabbage.shortlink.project.dao.mapper.LinkDeviceStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkLocaleStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkNetworkStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkOsStatsMapper;
+import org.cabbage.shortlink.project.dao.mapper.LinkStatsTodayMapper;
 import org.cabbage.shortlink.project.dao.mapper.ShortLinkMapper;
 import org.cabbage.shortlink.project.dto.req.ShortLinkCreateReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkPageReqDTO;
@@ -102,6 +104,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     private final LinkGotoService linkGotoService;
     private final ShortLinkMapper shortLinkMapper;
     private final LinkAccessStatsMapper linkAccessStatsMapper;
+    private final LinkStatsTodayMapper linkStatsTodayMapper;
     private final LinkLocaleStatsMapper linkLocaleStatsMapper;
     private final LinkOsStatsMapper linkOsStatsMapper;
     private final LinkBrowserStatsMapper linkBrowserStatsMapper;
@@ -453,6 +456,14 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
 
         shortLinkMapper.incrementStats(gid, fullShortUrl, 1, uvFlag.get() ? 1 : 0, uipFlag ? 1 : 0);
+        linkStatsTodayMapper.insertOrUpdate(LinkStatsTodayDO.builder()
+                        .fullShortUrl(fullShortUrl)
+                        .gid(gid)
+                        .date(today)
+                        .todayPv(1)
+                        .todayUv(uvFlag.get() ? 1 : 0)
+                        .todayUip(uipFlag ? 1 : 0)
+                        .build());
     }
 
     private String generateShortUrl(ShortLinkCreateReqDTO req) {
