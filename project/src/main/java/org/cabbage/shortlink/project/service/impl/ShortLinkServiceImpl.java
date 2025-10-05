@@ -100,6 +100,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     private final RBloomFilter<String> shortUriCachePenetrationBloomFilter;
 
     private final LinkGotoService linkGotoService;
+    private final ShortLinkMapper shortLinkMapper;
     private final LinkAccessStatsMapper linkAccessStatsMapper;
     private final LinkLocaleStatsMapper linkLocaleStatsMapper;
     private final LinkOsStatsMapper linkOsStatsMapper;
@@ -129,6 +130,9 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         linkDO.setShortUri(shortUri);
         linkDO.setFullShortUrl(fullShortUrl);
         linkDO.setFavicon(getFavicon(req.getOriginUrl()));
+        linkDO.setTotalPv(0);
+        linkDO.setTotalUv(0);
+        linkDO.setTotalUip(0);
         try {
             save(linkDO);
             linkGotoService.save(LinkGotoDO.builder().fullShortUrl(fullShortUrl).gid(req.getGid()).build());
@@ -447,6 +451,8 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 .build();
         linkNetworkStatsMapper.insertOrUpdate(networkStatsDO);
 
+
+        shortLinkMapper.incrementStats(gid, fullShortUrl, 1, uvFlag.get() ? 1 : 0, uipFlag ? 1 : 0);
     }
 
     private String generateShortUrl(ShortLinkCreateReqDTO req) {
