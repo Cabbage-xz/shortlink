@@ -1,8 +1,8 @@
 package org.cabbage.shortlink.admin.service.interfaces;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkRecycleBinPageReqDTO;
-import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkPageRespDTO;
+import org.cabbage.shortlink.common.dto.req.ShortLinkRecycleBinPageReqDTO;
+import org.cabbage.shortlink.common.dto.resp.ShortLinkPageRespDTO;
 import org.cabbage.shortlink.common.convention.result.Result;
 
 /**

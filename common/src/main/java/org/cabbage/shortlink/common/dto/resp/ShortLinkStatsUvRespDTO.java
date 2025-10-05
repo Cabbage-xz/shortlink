@@ -1,4 +1,4 @@
-package org.cabbage.shortlink.project.dto.resp;
+package org.cabbage.shortlink.common.dto.resp;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,23 +8,22 @@ import lombok.NoArgsConstructor;
 /**
  * @author xzcabbage
  * @since 2025/10/4
- * 地区响应
+ * 访客类型响应
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ShortLinkStatsLocaleCNRespDTO {
-
+public class ShortLinkStatsUvRespDTO {
     /**
      * 统计
      */
     private Integer cnt;
 
     /**
-     * 地区
+     * 访客类型
      */
-    private String locale;
+    private String uvType;
 
     /**
      * 占比

@@ -1,4 +1,4 @@
-package org.cabbage.shortlink.project.dto.req;
+package org.cabbage.shortlink.common.dto.req;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -13,6 +13,10 @@ import java.time.LocalDateTime;
 @Data
 public class ShortLinkCreateReqDTO {
 
+    /**
+     * 域名
+     */
+    private String domain;
 
     /**
      * 原始链接

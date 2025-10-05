@@ -1,4 +1,4 @@
-package org.cabbage.shortlink.project.dto.resp;
+package org.cabbage.shortlink.common.dto.resp;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

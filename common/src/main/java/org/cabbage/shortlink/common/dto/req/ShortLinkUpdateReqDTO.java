@@ -1,4 +1,4 @@
-package org.cabbage.shortlink.admin.remote.dto.req;
+package org.cabbage.shortlink.common.dto.req;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -7,16 +7,12 @@ import java.time.LocalDateTime;
 
 /**
  * @author xzcabbage
- * @since 2025/9/24
- * 短链接创建请求
+ * @since 2025/10/02
+ * 短链接更新请求
  */
 @Data
-public class ShortLinkCreateReqDTO {
+public class ShortLinkUpdateReqDTO {
 
-    /**
-     * 域名
-     */
-    private String domain;
 
     /**
      * 原始链接
@@ -24,14 +20,20 @@ public class ShortLinkCreateReqDTO {
     private String originUrl;
 
     /**
+     * 短链接
+     */
+    private String fullShortUrl;
+
+    /**
+     * 原有分组标识
+     */
+    private String originGid;
+
+    /**
      * 分组标识
      */
     private String gid;
 
-    /**
-     * 创建类型 0:接口创建 1:控制台创建
-     */
-    private Integer createType;
 
     /**
      * 有效期类型 0:永久有效 1:自定义

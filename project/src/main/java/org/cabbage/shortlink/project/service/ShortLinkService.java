@@ -4,13 +4,13 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
+import org.cabbage.shortlink.common.dto.req.ShortLinkCreateReqDTO;
+import org.cabbage.shortlink.common.dto.req.ShortLinkPageReqDTO;
+import org.cabbage.shortlink.common.dto.req.ShortLinkUpdateReqDTO;
+import org.cabbage.shortlink.common.dto.resp.ShortLinkCountQueryRespDTO;
+import org.cabbage.shortlink.common.dto.resp.ShortLinkCreateRespDTO;
+import org.cabbage.shortlink.common.dto.resp.ShortLinkPageRespDTO;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
-import org.cabbage.shortlink.project.dto.req.ShortLinkCreateReqDTO;
-import org.cabbage.shortlink.project.dto.req.ShortLinkPageReqDTO;
-import org.cabbage.shortlink.project.dto.req.ShortLinkUpdateReqDTO;
-import org.cabbage.shortlink.project.dto.resp.ShortLinkCountQueryRespDTO;
-import org.cabbage.shortlink.project.dto.resp.ShortLinkCreateRespDTO;
-import org.cabbage.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 
 import java.util.List;
 

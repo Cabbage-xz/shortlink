@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Select;
 import org.cabbage.shortlink.project.dao.entity.LinkBrowserStatsDO;
-import org.cabbage.shortlink.project.dto.req.ShortLinkGroupStatsReqDTO;
-import org.cabbage.shortlink.project.dto.req.ShortLinkStatsReqDTO;
+import org.cabbage.shortlink.common.dto.req.ShortLinkGroupStatsReqDTO;
+import org.cabbage.shortlink.common.dto.req.ShortLinkStatsReqDTO;
 
 import java.util.List;
 

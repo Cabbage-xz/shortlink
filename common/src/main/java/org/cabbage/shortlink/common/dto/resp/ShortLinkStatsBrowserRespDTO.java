@@ -1,4 +1,4 @@
-package org.cabbage.shortlink.project.dto.resp;
+package org.cabbage.shortlink.common.dto.resp;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,13 +8,13 @@ import lombok.NoArgsConstructor;
 /**
  * @author xzcabbage
  * @since 2025/10/4
- * 设备响应
+ * 浏览器响应
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ShortLinkStatsDeviceRespDTO {
+public class ShortLinkStatsBrowserRespDTO {
 
     /**
      * 统计
@@ -22,9 +22,9 @@ public class ShortLinkStatsDeviceRespDTO {
     private Integer cnt;
 
     /**
-     * 设备类型
+     * 浏览器
      */
-    private String device;
+    private String browser;
 
     /**
      * 占比

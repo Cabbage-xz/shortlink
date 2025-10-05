@@ -1,4 +1,4 @@
-package org.cabbage.shortlink.admin.remote.dto.resp;
+package org.cabbage.shortlink.common.dto.resp;
 
 import lombok.Data;
 

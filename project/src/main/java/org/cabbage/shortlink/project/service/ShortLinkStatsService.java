@@ -2,11 +2,11 @@ package org.cabbage.shortlink.project.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.cabbage.shortlink.project.dto.req.ShortLinkGroupStatsAccessRecordReqDTO;
-import org.cabbage.shortlink.project.dto.req.ShortLinkGroupStatsReqDTO;
+import org.cabbage.shortlink.common.dto.req.ShortLinkGroupStatsReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkStatsAccessRecordReqDTO;
-import org.cabbage.shortlink.project.dto.req.ShortLinkStatsReqDTO;
-import org.cabbage.shortlink.project.dto.resp.ShortLinkStatsAccessRecordRespDTO;
-import org.cabbage.shortlink.project.dto.resp.ShortLinkStatsRespDTO;
+import org.cabbage.shortlink.common.dto.req.ShortLinkStatsReqDTO;
+import org.cabbage.shortlink.common.dto.resp.ShortLinkStatsAccessRecordRespDTO;
+import org.cabbage.shortlink.common.dto.resp.ShortLinkStatsRespDTO;
 
 /**
  * @author xzcabbage

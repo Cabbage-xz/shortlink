@@ -1,4 +1,4 @@
-package org.cabbage.shortlink.admin.remote.dto.req;
+package org.cabbage.shortlink.common.dto.req;
 
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.Data;

@@ -6,8 +6,8 @@ import org.apache.ibatis.annotations.Select;
 import org.cabbage.shortlink.project.dao.bo.ShortLinkStatsAccessLogBO;
 import org.cabbage.shortlink.project.dao.entity.LinkAccessLogsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkAccessStatsDO;
-import org.cabbage.shortlink.project.dto.req.ShortLinkGroupStatsReqDTO;
-import org.cabbage.shortlink.project.dto.req.ShortLinkStatsReqDTO;
+import org.cabbage.shortlink.common.dto.req.ShortLinkGroupStatsReqDTO;
+import org.cabbage.shortlink.common.dto.req.ShortLinkStatsReqDTO;
 
 import java.time.LocalDate;
 import java.util.List;

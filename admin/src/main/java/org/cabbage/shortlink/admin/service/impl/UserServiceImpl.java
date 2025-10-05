@@ -103,7 +103,6 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     @Override
     public void updateInfo(UserUpdateReqDTO req) {
-        // todo 验证当前用户是否为登陆用户
         update(BeanUtil.toBean(req, User.class),
                 new LambdaUpdateWrapper<>(User.class).eq(User::getUsername, req.getUsername()));
     }

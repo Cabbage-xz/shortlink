@@ -1,20 +1,27 @@
 package org.cabbage.shortlink.admin.remote;
 
+import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.TypeReference;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import org.cabbage.shortlink.admin.remote.dto.req.RecycleBinRecoverReqDTO;
-import org.cabbage.shortlink.admin.remote.dto.req.RecycleBinRemoveReqDTO;
-import org.cabbage.shortlink.admin.remote.dto.req.RecycleBinSaveReqDTO;
-import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkCreateReqDTO;
-import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkPageReqDTO;
-import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkRecycleBinPageReqDTO;
-import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkUpdateReqDTO;
-import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkCountQueryRespDTO;
-import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkCreateRespDTO;
-import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkPageRespDTO;
+import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkGroupStatsAccessRecordReqDTO;
+import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkStatsAccessRecordReqDTO;
 import org.cabbage.shortlink.common.convention.result.Result;
+import org.cabbage.shortlink.common.dto.req.RecycleBinRecoverReqDTO;
+import org.cabbage.shortlink.common.dto.req.RecycleBinRemoveReqDTO;
+import org.cabbage.shortlink.common.dto.req.RecycleBinSaveReqDTO;
+import org.cabbage.shortlink.common.dto.req.ShortLinkCreateReqDTO;
+import org.cabbage.shortlink.common.dto.req.ShortLinkGroupStatsReqDTO;
+import org.cabbage.shortlink.common.dto.req.ShortLinkPageReqDTO;
+import org.cabbage.shortlink.common.dto.req.ShortLinkRecycleBinPageReqDTO;
+import org.cabbage.shortlink.common.dto.req.ShortLinkStatsReqDTO;
+import org.cabbage.shortlink.common.dto.req.ShortLinkUpdateReqDTO;
+import org.cabbage.shortlink.common.dto.resp.ShortLinkCountQueryRespDTO;
+import org.cabbage.shortlink.common.dto.resp.ShortLinkCreateRespDTO;
+import org.cabbage.shortlink.common.dto.resp.ShortLinkPageRespDTO;
+import org.cabbage.shortlink.common.dto.resp.ShortLinkStatsAccessRecordRespDTO;
+import org.cabbage.shortlink.common.dto.resp.ShortLinkStatsRespDTO;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.HashMap;
@@ -133,5 +140,59 @@ public interface ShortLinkRemoteService {
      */
     default void removeShortLink(RecycleBinRemoveReqDTO req) {
         HttpUtil.post("http://127.0.0.1:8001/api/short-link/v1/recycle-bin/remove", JSON.toJSONString(req));
+    }
+
+    /**
+     * 访问单个短链接指定时间内监控数据
+     *
+     * @param requestParam 访问短链接监控请求参数
+     * @return 短链接监控信息
+     */
+    default Result<ShortLinkStatsRespDTO> oneShortLinkStats(ShortLinkStatsReqDTO requestParam) {
+        String resultBodyStr = HttpUtil.get("http://127.0.0.1:8001/api/short-link/v1/stats", BeanUtil.beanToMap(requestParam));
+        return JSON.parseObject(resultBodyStr, new TypeReference<>() {
+        });
+    }
+
+    /**
+     * 访问分组短链接指定时间内监控数据
+     *
+     * @param requestParam 访分组问短链接监控请求参数
+     * @return 分组短链接监控信息
+     */
+    default Result<ShortLinkStatsRespDTO> groupShortLinkStats(ShortLinkGroupStatsReqDTO requestParam) {
+        String resultBodyStr = HttpUtil.get("http://127.0.0.1:8001/api/short-link/v1/stats/group", BeanUtil.beanToMap(requestParam));
+        return JSON.parseObject(resultBodyStr, new TypeReference<>() {
+        });
+    }
+
+    /**
+     * 访问单个短链接指定时间内监控访问记录数据
+     *
+     * @param requestParam 访问短链接监控访问记录请求参数
+     * @return 短链接监控访问记录信息
+     */
+    default Result<IPage<ShortLinkStatsAccessRecordRespDTO>> shortLinkStatsAccessRecord(ShortLinkStatsAccessRecordReqDTO requestParam) {
+        Map<String, Object> stringObjectMap = BeanUtil.beanToMap(requestParam, false, true);
+        stringObjectMap.remove("orders");
+        stringObjectMap.remove("records");
+        String resultBodyStr = HttpUtil.get("http://127.0.0.1:8001/api/short-link/v1/stats/access-record", stringObjectMap);
+        return JSON.parseObject(resultBodyStr, new TypeReference<>() {
+        });
+    }
+
+    /**
+     * 访问分组短链接指定时间内监控访问记录数据
+     *
+     * @param requestParam 访问分组短链接监控访问记录请求参数
+     * @return 分组短链接监控访问记录信息
+     */
+    default Result<IPage<ShortLinkStatsAccessRecordRespDTO>> groupShortLinkStatsAccessRecord(ShortLinkGroupStatsAccessRecordReqDTO requestParam) {
+        Map<String, Object> stringObjectMap = BeanUtil.beanToMap(requestParam, false, true);
+        stringObjectMap.remove("orders");
+        stringObjectMap.remove("records");
+        String resultBodyStr = HttpUtil.get("http://127.0.0.1:8001/api/short-link/v1/stats/access-record/group", stringObjectMap);
+        return JSON.parseObject(resultBodyStr, new TypeReference<>() {
+        });
     }
 }

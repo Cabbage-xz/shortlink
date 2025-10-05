@@ -12,7 +12,7 @@ import org.cabbage.shortlink.admin.dto.req.LinkGroupSortReqDTO;
 import org.cabbage.shortlink.admin.dto.req.LinkGroupUpdateReqDTO;
 import org.cabbage.shortlink.admin.dto.resp.LinkGroupRespDTO;
 import org.cabbage.shortlink.admin.remote.ShortLinkRemoteService;
-import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkCountQueryRespDTO;
+import org.cabbage.shortlink.common.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.GroupService;
 import org.cabbage.shortlink.admin.toolkit.RandomGenerator;
 import org.springframework.stereotype.Service;

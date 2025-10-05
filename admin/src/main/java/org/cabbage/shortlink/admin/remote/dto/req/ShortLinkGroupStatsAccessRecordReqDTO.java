@@ -1,5 +1,6 @@
-package org.cabbage.shortlink.project.dto.req;
+package org.cabbage.shortlink.admin.remote.dto.req;
 
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 
@@ -10,7 +11,8 @@ import java.time.LocalDate;
  * @since 2025/10/5
  */
 @Data
-public class ShortLinkGroupStatsReqDTO {
+public class ShortLinkGroupStatsAccessRecordReqDTO extends Page {
+
 
     /**
      * 分组标识

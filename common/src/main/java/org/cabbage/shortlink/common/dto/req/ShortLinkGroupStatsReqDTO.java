@@ -1,4 +1,4 @@
-package org.cabbage.shortlink.project.dto.req;
+package org.cabbage.shortlink.common.dto.req;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
@@ -7,15 +7,10 @@ import java.time.LocalDate;
 
 /**
  * @author xzcabbage
- * @since 2025/10/4
+ * @since 2025/10/5
  */
 @Data
-public class ShortLinkStatsReqDTO {
-
-    /**
-     * 完整短链接
-     */
-    private String fullShortUrl;
+public class ShortLinkGroupStatsReqDTO {
 
     /**
      * 分组标识

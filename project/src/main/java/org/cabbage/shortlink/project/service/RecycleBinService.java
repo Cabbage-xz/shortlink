@@ -2,12 +2,12 @@ package org.cabbage.shortlink.project.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.IService;
+import org.cabbage.shortlink.common.dto.req.RecycleBinRecoverReqDTO;
+import org.cabbage.shortlink.common.dto.req.RecycleBinRemoveReqDTO;
+import org.cabbage.shortlink.common.dto.req.RecycleBinSaveReqDTO;
+import org.cabbage.shortlink.common.dto.req.ShortLinkRecycleBinPageReqDTO;
+import org.cabbage.shortlink.common.dto.resp.ShortLinkPageRespDTO;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
-import org.cabbage.shortlink.project.dto.req.RecycleBinRecoverReqDTO;
-import org.cabbage.shortlink.project.dto.req.RecycleBinRemoveReqDTO;
-import org.cabbage.shortlink.project.dto.req.RecycleBinSaveReqDTO;
-import org.cabbage.shortlink.project.dto.req.ShortLinkRecycleBinPageReqDTO;
-import org.cabbage.shortlink.project.dto.resp.ShortLinkPageRespDTO;
 
 /**
  * @author xzcabbage

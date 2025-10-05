@@ -1,4 +1,4 @@
-package org.cabbage.shortlink.project.dto.resp;
+package org.cabbage.shortlink.common.dto.resp;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -8,20 +8,26 @@ import lombok.NoArgsConstructor;
 /**
  * @author xzcabbage
  * @since 2025/10/4
- * 高频ip响应
+ * 网络响应
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ShortLinkStatsTopIpRespDTO {
+public class ShortLinkStatsNetworkRespDTO {
+
     /**
      * 统计
      */
     private Integer cnt;
 
     /**
-     * IP
+     * 访问网络
      */
-    private String ip;
+    private String network;
+
+    /**
+     * 占比
+     */
+    private Double ratio;
 }
