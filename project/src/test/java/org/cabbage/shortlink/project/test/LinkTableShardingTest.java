@@ -6,7 +6,7 @@ package org.cabbage.shortlink.project.test;
  */
 public class LinkTableShardingTest {
 
-    public static final String SQL = " create table t_link_%d\n" +
+    public static final String SQL = "create table t_link_%d\n" +
             "(\n" +
             "    id              bigint auto_increment comment 'ID'\n" +
             "        primary key,\n" +
@@ -22,9 +22,13 @@ public class LinkTableShardingTest {
             "    valid_date_type tinyint(1)                                               null comment '有效期类型 0:永久有效 1:自定义',\n" +
             "    valid_date      datetime                                                 null comment '有效期',\n" +
             "    description     varchar(1024) collate utf8mb4_general_ci                 null comment '描述',\n" +
+            "    total_pv        int                                                      null,\n" +
+            "    total_uv        int                                                      null,\n" +
+            "    total_uip       int                                                      null,\n" +
             "    create_time     datetime                                                 null comment '创建时间',\n" +
             "    update_time     datetime                                                 null comment '更新时间',\n" +
             "    del_flag        tinyint(1)                                               null comment '删除标识 0:未删除 1:已删除',\n" +
+            "    del_time        bigint                                                   null,\n" +
             "    constraint idx_unique_full_short_url\n" +
             "        unique (full_short_url)\n" +
             ");";
@@ -62,7 +66,7 @@ public class LinkTableShardingTest {
 
     public static void main(String[] args) {
         for (int i = 0; i < 16; i++) {
-            System.out.printf((SQL_LINK_GOTO) + "%n", i);
+            System.out.printf((SQL) + "%n", i);
         }
     }
 }
