@@ -2,9 +2,9 @@ package org.cabbage.shortlink.admin.dao.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.cabbage.shortlink.common.database.BaseDO;
 
 /**
@@ -14,7 +14,7 @@ import org.cabbage.shortlink.common.database.BaseDO;
  */
 @Data
 @TableName("t_group")
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 public class GroupDO extends BaseDO {

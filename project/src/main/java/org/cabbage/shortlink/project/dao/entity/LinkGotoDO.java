@@ -2,9 +2,9 @@ package org.cabbage.shortlink.project.dao.entity;
 
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 import org.cabbage.shortlink.common.database.BaseDO;
 
 /**
@@ -12,7 +12,7 @@ import org.cabbage.shortlink.common.database.BaseDO;
  * @since 2025/10/2
  */
 @Data
-@Builder
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName("t_link_goto")
