@@ -87,10 +87,14 @@ public class RecycleBinServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLin
      */
     @Override
     public void removeShortLink(RecycleBinRemoveReqDTO req) {
-        ShortLinkDO shortLink = ShortLinkDO.builder().delFlag(1).build();
+        ShortLinkDO shortLink = ShortLinkDO.builder()
+                .delFlag(1)
+                .delTime(System.currentTimeMillis())
+                .build();
         update(shortLink, new LambdaUpdateWrapper<ShortLinkDO>()
                 .eq(ShortLinkDO::getGid, req.getGid())
                 .eq(ShortLinkDO::getFullShortUrl, req.getFullShortUrl())
-                .eq(ShortLinkDO::getEnableStatus, 1));
+                .eq(ShortLinkDO::getEnableStatus, 1)
+                .eq(ShortLinkDO::getDelTime, 0L));
     }
 }

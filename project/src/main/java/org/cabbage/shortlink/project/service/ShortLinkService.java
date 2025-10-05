@@ -12,6 +12,7 @@ import org.cabbage.shortlink.common.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.common.dto.resp.ShortLinkCreateRespDTO;
 import org.cabbage.shortlink.common.dto.resp.ShortLinkPageRespDTO;
 import org.cabbage.shortlink.project.dao.entity.ShortLinkDO;
+import org.cabbage.shortlink.project.dto.biz.ShortLinkStatsRecordDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkBatchCreateRespDTO;
 
 import java.util.List;
@@ -66,4 +67,13 @@ public interface ShortLinkService extends IService<ShortLinkDO> {
      * @param res 响应
      */
     void jumpLink(String shortUri, ServletRequest req, ServletResponse res);
+
+    /**
+     * 短链接统计
+     *
+     * @param fullShortUrl         完整短链接
+     * @param gid                  分组标识
+     * @param shortLinkStatsRecord 短链接统计实体参数
+     */
+    void shortLinkStats(String fullShortUrl, String gid, ShortLinkStatsRecordDTO shortLinkStatsRecord);
 }

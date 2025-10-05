@@ -12,7 +12,8 @@ public enum ShortLInkErrorCodeEnum implements IErrorCode {
     SHORT_LINK_CREATE_TIMES_TOO_MANY("B003001", "短链接频繁生成，请稍后再试"),
     SHORT_LINK_ALREADY_EXIST("B003002", "短链接已存在"),
     SHORT_LINK_NOT_EXIST("B003003", "短链接不存在"),
-    SHORT_LINK_GET_REMOTE_LOCALE_ERROR("B003004", "获取地理位置失败");
+    SHORT_LINK_GET_REMOTE_LOCALE_ERROR("B003004", "获取地理位置失败"),
+    SHORT_LINK_GET_WRITE_LOCK_ERROR("B003005", "获取写锁失败");
 
     private final String code;
 
