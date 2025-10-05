@@ -13,10 +13,6 @@ import java.time.LocalDateTime;
 @Data
 public class ShortLinkCreateReqDTO {
 
-    /**
-     * 域名
-     */
-    private String domain;
 
     /**
      * 原始链接

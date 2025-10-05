@@ -72,6 +72,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -118,6 +119,9 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     @Value("${short-link.stats.locale.amap-key}")
     private String statsLocaleAMapKey;
 
+    @Value("${short-link.domain.default}")
+    private String defaultDomain;
+
     /**
      * 创建短链接
      *
@@ -128,8 +132,9 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     @Override
     public ShortLinkCreateRespDTO createShortLink(ShortLinkCreateReqDTO req) {
         String shortUri = generateShortUrl(req);
-        String fullShortUrl = req.getDomain() + "/" + shortUri;
+        String fullShortUrl = defaultDomain + "/" + shortUri;
         ShortLinkDO linkDO = BeanUtil.toBean(req, ShortLinkDO.class);
+        linkDO.setDomain(defaultDomain);
         linkDO.setShortUri(shortUri);
         linkDO.setFullShortUrl(fullShortUrl);
         linkDO.setFavicon(getFavicon(req.getOriginUrl()));
@@ -257,7 +262,12 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     @Override
     public void jumpLink(String shortUri, ServletRequest req, ServletResponse res) {
         String serverName = req.getServerName();
-        String fullShortUrl = serverName + "/" + shortUri;
+        String serverPort = Optional.of(req.getServerPort())
+                .filter(port -> !Objects.equals(port, 80))
+                .map(String::valueOf)
+                .map(port -> ":" + port)
+                .orElse("");
+        String fullShortUrl = serverName + serverPort + "/" + shortUri;
         // 查询缓存是否包含原始链接
         String originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
         if (StrUtil.isNotBlank(originalUrl)) {
@@ -472,7 +482,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             }
             String salt = UUID.randomUUID().toString();
             shortUri = HashUtil.hashToBase62(req.getOriginUrl() + salt);
-            String fullUrl = req.getDomain() + "/" + shortUri;
+            String fullUrl = defaultDomain + "/" + shortUri;
             if (!shortUriCachePenetrationBloomFilter.contains(fullUrl)) {
                 break;
             }
