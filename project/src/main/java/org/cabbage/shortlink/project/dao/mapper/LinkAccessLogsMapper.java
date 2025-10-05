@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Select;
 import org.cabbage.shortlink.project.dao.bo.ShortLinkStatsAccessLogBO;
 import org.cabbage.shortlink.project.dao.entity.LinkAccessLogsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkAccessStatsDO;
+import org.cabbage.shortlink.project.dto.req.ShortLinkGroupStatsReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkStatsReqDTO;
 
 import java.time.LocalDate;
@@ -39,6 +40,25 @@ public interface LinkAccessLogsMapper extends BaseMapper<LinkAccessLogsDO> {
     List<ShortLinkStatsAccessLogBO> listTop5IpByShortLink(ShortLinkStatsReqDTO requestParam);
 
     /**
+     * 根据分组短链接获取指定日期内高频访问IP数据
+     */
+    @Select("SELECT " +
+            "    ip, " +
+            "    COUNT(ip) AS cnt " +
+            "FROM " +
+            "    t_link_access_logs " +
+            "WHERE " +
+            "    gid = #{param.gid} " +
+            "    AND create_time >= #{startDate} " +
+            "    AND create_time < DATE_ADD(#{endDate}, INTERVAL 1 DAY) " +
+            "GROUP BY " +
+            "    gid, ip " +
+            "ORDER BY " +
+            "    count DESC " +
+            "LIMIT 5;")
+    List<ShortLinkStatsAccessLogBO> listTop5IpByGroupShortLink(ShortLinkGroupStatsReqDTO requestParam);
+
+    /**
      * 根据短链接获取指定日期内新旧访客数据
      */
     @Select("SELECT " +
@@ -57,6 +77,25 @@ public interface LinkAccessLogsMapper extends BaseMapper<LinkAccessLogsDO> {
             "        user " +
             ") AS user_counts;")
     ShortLinkStatsAccessLogBO findUvTypeCntByShortLink(@Param("param") ShortLinkStatsReqDTO requestParam);
+
+    /**
+     * 根据分组短链接获取指定日期内新旧访客数据
+     */
+    @Select("SELECT " +
+            "    SUM(old_user) AS oldUserCnt, " +
+            "    SUM(new_user) AS newUserCnt " +
+            "FROM ( " +
+            "    SELECT " +
+            "        CASE WHEN COUNT(DISTINCT DATE(create_time)) > 1 THEN 1 ELSE 0 END AS old_user, " +
+            "        CASE WHEN COUNT(DISTINCT DATE(create_time)) = 1 AND MAX(create_time) >= #{startDate} AND MAX(create_time) <= #{endDate} THEN 1 ELSE 0 END AS new_user " +
+            "    FROM " +
+            "        t_link_access_logs " +
+            "    WHERE " +
+            "        gid = #{gid} " +
+            "    GROUP BY " +
+            "        user " +
+            ") AS user_counts;")
+    ShortLinkStatsAccessLogBO findUvTypeCntByGroupShortLink(@Param("param") ShortLinkGroupStatsReqDTO requestParam);
 
 
     @Select("<script> " +
@@ -86,8 +125,6 @@ public interface LinkAccessLogsMapper extends BaseMapper<LinkAccessLogsDO> {
                                                   @Param("userAccessLogsList") List<String> userAccessLogsList);
 
     @Select("SELECT " +
-            "   full_short_url, " +
-            "   gid, " +
             "   COUNT(user) AS pv, " +
             "   COUNT(DISTINCT user) AS uv, " +
             "   COUNT(DISTINCT ip) AS uip " +
@@ -101,4 +138,19 @@ public interface LinkAccessLogsMapper extends BaseMapper<LinkAccessLogsDO> {
             "GROUP BY " +
             "   full_short_url, gid;")
     LinkAccessStatsDO findPvUvUipStatsBySingleShortLink(ShortLinkStatsReqDTO req);
+
+    @Select("SELECT " +
+            "   gid, " +
+            "   COUNT(user) AS pv, " +
+            "   COUNT(DISTINCT user) AS uv, " +
+            "   COUNT(DISTINCT ip) AS uip " +
+            "FROM " +
+            "   t_link_access_logs " +
+            "WHERE " +
+            "   gid = #{gid} " +
+            "   AND create_time >= #{startDate} " +
+            "   AND create_time < DATE_ADD(#{endDate}, INTERVAL 1 DAY) " +
+            "GROUP BY " +
+            "   gid;")
+    LinkAccessStatsDO findPvUvUipStatsByGroupShortLink(ShortLinkGroupStatsReqDTO req);
 }

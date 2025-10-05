@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.common.convention.result.Result;
 import org.cabbage.shortlink.common.convention.result.Results;
+import org.cabbage.shortlink.project.dto.req.ShortLinkGroupStatsReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkStatsAccessRecordReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkStatsReqDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkStatsAccessRecordRespDTO;
@@ -33,6 +34,16 @@ public class ShortLinkStatsController {
     @RequestMapping(value = "/api/short-link/v1/stats", method = RequestMethod.GET)
     public Result<ShortLinkStatsRespDTO> shortLInkStats(ShortLinkStatsReqDTO req) {
         return Results.success(shortLinkStatsService.singleShortLinkStats(req));
+    }
+
+    /**
+     * 监控分组短链接使用情况
+     * @param req 监控请求
+     * @return 使用情况
+     */
+    @RequestMapping(value = "/api/short-link/v1/group", method = RequestMethod.GET)
+    public Result<ShortLinkStatsRespDTO> shortLInkStats(ShortLinkGroupStatsReqDTO req) {
+        return Results.success(shortLinkStatsService.groupShortLinkStats(req));
     }
 
 

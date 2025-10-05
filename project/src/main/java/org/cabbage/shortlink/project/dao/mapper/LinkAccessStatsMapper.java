@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Select;
 import org.cabbage.shortlink.project.dao.entity.LinkAccessStatsDO;
+import org.cabbage.shortlink.project.dto.req.ShortLinkGroupStatsReqDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkStatsReqDTO;
 
 import java.util.List;
@@ -42,10 +43,29 @@ public interface LinkAccessStatsMapper extends BaseMapper<LinkAccessStatsDO> {
             "WHERE " +
             "    full_short_url = #{fullShortUrl} " +
             "    AND gid = #{gid} " +
-            "    AND date BETWEEN #{startDate} and #{endDate} " +
+            "    AND create_time >= #{startDate} " +
+            "    AND create_time < DATE_ADD(#{endDate}, INTERVAL 1 DAY) " +
             "GROUP BY " +
             "    full_short_url, gid, date;")
     List<LinkAccessStatsDO> queryStatsBySingleShortLink(ShortLinkStatsReqDTO req);
+
+    /**
+     * 根据分组获取指定日期内基础监控数据
+     */
+    @Select("SELECT " +
+            "    date, " +
+            "    SUM(pv) AS pv, " +
+            "    SUM(uv) AS uv, " +
+            "    SUM(uip) AS uip " +
+            "FROM " +
+            "    t_link_access_stats " +
+            "WHERE " +
+            "    gid = #{param.gid} " +
+            "    AND create_time >= #{startDate} " +
+            "    AND create_time < DATE_ADD(#{endDate}, INTERVAL 1 DAY) " +
+            "GROUP BY " +
+            "    gid, date;")
+    List<LinkAccessStatsDO> queryStatsByGroupShortLink(ShortLinkGroupStatsReqDTO requestParam);
 
 
     /**
@@ -63,10 +83,27 @@ public interface LinkAccessStatsMapper extends BaseMapper<LinkAccessStatsDO> {
             "WHERE " +
             "    full_short_url = #{fullShortUrl} " +
             "    AND gid = #{gid} " +
-            "    AND date BETWEEN #{startDate} and #{endDate} " +
+            "    AND create_time >= #{startDate} " +
+            "    AND create_time < DATE_ADD(#{endDate}, INTERVAL 1 DAY) " +
             "GROUP BY " +
             "    full_short_url, gid, hour;")
     List<LinkAccessStatsDO> queryHourStatsBySingleShortLink(ShortLinkStatsReqDTO req);
+
+    /**
+     * 根据分组获取指定日期内小时基础监控数据
+     */
+    @Select("SELECT " +
+            "    hour, " +
+            "    SUM(pv) AS pv " +
+            "FROM " +
+            "    t_link_access_stats " +
+            "WHERE " +
+            "    gid = #{gid} " +
+            "    AND create_time >= #{startDate} " +
+            "    AND create_time < DATE_ADD(#{endDate}, INTERVAL 1 DAY) " +
+            "GROUP BY " +
+            "    gid, hour;")
+    List<LinkAccessStatsDO> queryHourStatsByGroupShortLink(ShortLinkGroupStatsReqDTO requestParam);
 
 
     /**
@@ -84,9 +121,26 @@ public interface LinkAccessStatsMapper extends BaseMapper<LinkAccessStatsDO> {
             "WHERE " +
             "    full_short_url = #{fullShortUrl} " +
             "    AND gid = #{gid} " +
-            "    AND date BETWEEN #{startDate} and #{endDate} " +
+            "    AND create_time >= #{startDate} " +
+            "    AND create_time < DATE_ADD(#{endDate}, INTERVAL 1 DAY) " +
             "GROUP BY " +
             "    full_short_url, gid, weekday;")
     List<LinkAccessStatsDO> queryWeekdayStatsBySingleShortLink(ShortLinkStatsReqDTO req);
+
+    /**
+     * 根据分组获取指定日期内小时基础监控数据
+     */
+    @Select("SELECT " +
+            "    weekday, " +
+            "    SUM(pv) AS pv " +
+            "FROM " +
+            "    t_link_access_stats " +
+            "WHERE " +
+            "    gid = #{gid} " +
+            "    AND create_time >= #{startDate} " +
+            "    AND create_time < DATE_ADD(#{endDate}, INTERVAL 1 DAY) " +
+            "GROUP BY " +
+            "    gid, weekday;")
+    List<LinkAccessStatsDO> queryWeekdayStatsByGroupShortLink(ShortLinkGroupStatsReqDTO requestParam);
 
 }
