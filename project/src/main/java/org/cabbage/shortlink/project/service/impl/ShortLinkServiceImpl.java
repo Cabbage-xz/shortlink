@@ -95,7 +95,7 @@ import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ShortLinkImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> implements ShortLinkService {
+public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLinkDO> implements ShortLinkService {
 
     private final RBloomFilter<String> shortUriCachePenetrationBloomFilter;
 
