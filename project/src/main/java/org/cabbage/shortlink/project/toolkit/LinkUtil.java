@@ -1,5 +1,8 @@
 package org.cabbage.shortlink.project.toolkit;
 
+import cn.hutool.core.util.StrUtil;
+
+import java.net.URI;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
@@ -31,5 +34,24 @@ public class LinkUtil {
         }
 
         return Duration.between(LocalDateTime.now(), validDate).toMillis();
+    }
+
+    /**
+     * 获取原始链接中域名，若存在 www. 则将其移除
+     * @param originalUrl 原始域名链接
+     * @return 更新后的域名
+     */
+    public static String extractDomain(String originalUrl) {
+        try {
+            URI uri = new URI(originalUrl);
+            String host = uri.getHost();
+            if (StrUtil.isBlank(host)) {
+                return null;
+            }
+
+            return host.startsWith("www.") ? host.substring(4) : host;
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 }

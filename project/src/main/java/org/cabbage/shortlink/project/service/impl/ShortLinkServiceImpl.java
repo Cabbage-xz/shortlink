@@ -21,6 +21,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.cabbage.shortlink.common.convention.exception.ClientException;
 import org.cabbage.shortlink.common.convention.exception.ServiceException;
 import org.cabbage.shortlink.common.dto.req.ShortLinkBatchCreateReqDTO;
 import org.cabbage.shortlink.common.dto.req.ShortLinkCreateReqDTO;
@@ -30,6 +31,7 @@ import org.cabbage.shortlink.common.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.common.dto.resp.ShortLinkCreateRespDTO;
 import org.cabbage.shortlink.common.dto.resp.ShortLinkPageRespDTO;
 import org.cabbage.shortlink.project.common.enums.ValidDateTypeEnum;
+import org.cabbage.shortlink.project.config.GoToDomainWhiteListConfiguration;
 import org.cabbage.shortlink.project.dao.entity.LinkAccessLogsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkAccessStatsDO;
 import org.cabbage.shortlink.project.dao.entity.LinkBrowserStatsDO;
@@ -98,10 +100,12 @@ import static org.cabbage.shortlink.common.constant.ShortLinkConstant.AMAP_REMOT
 import static org.cabbage.shortlink.common.constant.ShortLinkConstant.SHORT_LINK_STATS_UIP_KEY;
 import static org.cabbage.shortlink.common.constant.ShortLinkConstant.SHORT_LINK_STATS_UV_KEY;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_ALREADY_EXIST;
+import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_ANALYSE_ERROR;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_CREATE_TIMES_TOO_MANY;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_GET_REMOTE_LOCALE_ERROR;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_GET_WRITE_LOCK_ERROR;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_NOT_EXIST;
+import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_PROTECT_ERROR;
 
 
 /**
@@ -133,6 +137,8 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     private final StringRedisTemplate stringRedisTemplate;
     private final RedissonClient redissonClient;
 
+    private final GoToDomainWhiteListConfiguration goToDomainWhiteListConfiguration;
+
     @Value("${short-link.stats.locale.amap-key}")
     private String statsLocaleAMapKey;
 
@@ -148,6 +154,8 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     @Transactional
     @Override
     public ShortLinkCreateRespDTO createShortLink(ShortLinkCreateReqDTO req) {
+        verificationWhiteLinkList(req.getOriginUrl());
+
         String shortUri = generateShortUrl(req);
         String fullShortUrl = defaultDomain + "/" + shortUri;
         ShortLinkDO linkDO = BeanUtil.toBean(req, ShortLinkDO.class);
@@ -201,6 +209,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
                 // 生成短链接
                 ShortLinkCreateReqDTO tempReq = BeanUtil.toBean(req, ShortLinkCreateReqDTO.class);
+                verificationWhiteLinkList(originUrl);
                 tempReq.setOriginUrl(originUrl);
                 tempReq.setDescription(description);
 
@@ -277,6 +286,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     @Transactional
     @Override
     public void updateShortLink(ShortLinkUpdateReqDTO req) {
+        verificationWhiteLinkList(req.getOriginUrl());
         // 先依据full url查询
         ShortLinkDO one = getOne(new LambdaQueryWrapper<ShortLinkDO>()
                 .eq(ShortLinkDO::getFullShortUrl, req.getFullShortUrl())
@@ -667,6 +677,23 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         } finally {
             rLock.unlock();
         }
+    }
+
+
+    private void verificationWhiteLinkList(String originUrl) {
+        if (goToDomainWhiteListConfiguration.getEnabled() == null ||
+                !goToDomainWhiteListConfiguration.getEnabled()) {
+            return;
+        }
+        String domain = LinkUtil.extractDomain(originUrl);
+        if (StrUtil.isBlank(domain)) {
+            throw new ClientException(SHORT_LINK_ANALYSE_ERROR);
+        }
+        List<String> details = goToDomainWhiteListConfiguration.getDetails();
+        if (details.isEmpty() || !details.contains(domain)) {
+            throw new ClientException(SHORT_LINK_PROTECT_ERROR);
+        }
+
     }
 
     private ShortLinkStatsRecordDTO buildLinkStatsRecordAndSetUser(String fullShortUrl, ServletRequest req, ServletResponse res) {
