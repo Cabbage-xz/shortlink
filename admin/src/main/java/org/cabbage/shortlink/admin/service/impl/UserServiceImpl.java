@@ -25,11 +25,13 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-
-
-import static org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum.*;
+import static org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum.USER_NAME_EXIST;
+import static org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum.USER_PASSWORD_ERROR;
+import static org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum.USER_SAVE_ERROR;
+import static org.cabbage.shortlink.admin.common.enums.UserErrorCodeEnum.USER_TOKEN_ERROR;
 import static org.cabbage.shortlink.common.constant.RedisCacheConstant.LOCK_USER_LOGIN_KEY;
 import static org.cabbage.shortlink.common.constant.RedisCacheConstant.LOCK_USER_REGISTER_KEY;
 
@@ -122,14 +124,21 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         } else if (!one.getPassword().equals(req.getPassword())) {
             throw new ClientException(USER_PASSWORD_ERROR);
         }
-        Boolean hasLogin = stringRedisTemplate.hasKey(LOCK_USER_LOGIN_KEY + req.getUsername());
-        if (hasLogin) {
-            throw new ClientException(USER_ALREADY_LOGIN);
+
+        String loginKey = LOCK_USER_LOGIN_KEY + req.getUsername();
+        Map<Object, Object> loginInfo = stringRedisTemplate.opsForHash().entries(loginKey);
+
+        if (!loginInfo.isEmpty()) {
+            // 已登录，返回现有 uuid
+            String existingUuid = (String) loginInfo.keySet().iterator().next();
+            // 刷新过期时间
+            stringRedisTemplate.expire(loginKey, 30L, TimeUnit.MINUTES);
+            return new UserLoginRespDTO(existingUuid);
         }
         String uuid = UUID.randomUUID().toString();
-        stringRedisTemplate.opsForHash().put(LOCK_USER_LOGIN_KEY + req.getUsername(),
+        stringRedisTemplate.opsForHash().put(loginKey,
                 uuid, JSON.toJSONString(one));
-        stringRedisTemplate.expire(LOCK_USER_LOGIN_KEY + req.getUsername(), 30L, TimeUnit.MINUTES);
+        stringRedisTemplate.expire(loginKey, 30L, TimeUnit.MINUTES);
 
         return new UserLoginRespDTO(uuid);
     }
