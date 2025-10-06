@@ -18,6 +18,11 @@ public class RedisCacheConstant {
     public static final String LOCK_USER_LOGIN_KEY = "short-link:lock_user-login:";
 
     /**
+     * 短链接分组创建
+     */
+    public static final String LOCK_GROUP_CREATE_KEY = "short-link:lock_group-create:%s";
+
+    /**
      * 短链接跳转
      * %s 表示域名+短链接
      */

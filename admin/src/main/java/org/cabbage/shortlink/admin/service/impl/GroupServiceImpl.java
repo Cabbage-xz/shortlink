@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.cabbage.shortlink.admin.common.biz.user.UserContext;
 import org.cabbage.shortlink.admin.dao.entity.GroupDO;
@@ -12,9 +13,13 @@ import org.cabbage.shortlink.admin.dto.req.LinkGroupSortReqDTO;
 import org.cabbage.shortlink.admin.dto.req.LinkGroupUpdateReqDTO;
 import org.cabbage.shortlink.admin.dto.resp.LinkGroupRespDTO;
 import org.cabbage.shortlink.admin.remote.ShortLinkRemoteService;
+import org.cabbage.shortlink.common.convention.exception.ClientException;
 import org.cabbage.shortlink.common.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.admin.service.interfaces.GroupService;
 import org.cabbage.shortlink.admin.toolkit.RandomGenerator;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +28,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static org.cabbage.shortlink.admin.common.enums.GroupErrorCodeEnum.GROUP_NUM_TOO_MANY;
+import static org.cabbage.shortlink.common.constant.RedisCacheConstant.LOCK_GROUP_CREATE_KEY;
+
 /**
  * @author xzcabbage
  * @since 2025/9/21
@@ -30,8 +38,13 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implements GroupService {
 
+    private final RedissonClient redissonClient;
+
+    @Value("${short-link.group.max-num}")
+    private Integer maxNum;
 
     ShortLinkRemoteService shortLinkRemoteService = new ShortLinkRemoteService() {
 
@@ -49,18 +62,29 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
 
     @Override
     public void saveGroup(String username, String groupName) {
-        String gid;
-        // 生成唯一gid
-        do {
-            gid = RandomGenerator.generateRandom();
-        } while (isHasGid(username, gid));
-        GroupDO group = GroupDO.builder()
-                .gid(gid)
-                .username(username)
-                .sortOrder(0)
-                .name(groupName)
-                .build();
-        save(group);
+        RLock lock = redissonClient.getLock(String.format(LOCK_GROUP_CREATE_KEY, username));
+        lock.lock();
+        try {
+            long count = count(new LambdaQueryWrapper<GroupDO>().eq(GroupDO::getUsername, username));
+            if (count >= maxNum) {
+                throw new ClientException(GROUP_NUM_TOO_MANY);
+            }
+            String gid;
+            // 生成唯一gid
+            do {
+                gid = RandomGenerator.generateRandom();
+            } while (isHasGid(username, gid));
+            GroupDO group = GroupDO.builder()
+                    .gid(gid)
+                    .username(username)
+                    .sortOrder(0)
+                    .name(groupName)
+                    .build();
+            save(group);
+        } finally {
+            lock.unlock();
+        }
+
     }
 
     /**
