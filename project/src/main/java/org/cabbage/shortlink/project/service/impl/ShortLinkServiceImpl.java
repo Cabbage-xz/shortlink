@@ -5,9 +5,7 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.lang.UUID;
 import cn.hutool.core.util.ArrayUtil;
 import cn.hutool.core.util.StrUtil;
-import cn.hutool.http.HttpUtil;
 import com.alibaba.fastjson2.JSON;
-import com.alibaba.fastjson2.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -54,7 +52,7 @@ import org.cabbage.shortlink.project.dao.mapper.ShortLinkMapper;
 import org.cabbage.shortlink.project.dto.biz.ShortLinkStatsRecordDTO;
 import org.cabbage.shortlink.project.dto.req.ShortLinkBaseInfoRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkBatchCreateRespDTO;
-import org.cabbage.shortlink.project.mq.producer.DelayShortLinkStatsProducer;
+import org.cabbage.shortlink.project.mq.producer.ShortLinkStatsSaveProducer;
 import org.cabbage.shortlink.project.service.LinkGotoService;
 import org.cabbage.shortlink.project.service.LinkStatsTodayService;
 import org.cabbage.shortlink.project.service.ShortLinkService;
@@ -96,13 +94,11 @@ import static org.cabbage.shortlink.common.constant.RedisCacheConstant.GOTO_IS_N
 import static org.cabbage.shortlink.common.constant.RedisCacheConstant.GOTO_SHORT_LINK_KEY;
 import static org.cabbage.shortlink.common.constant.RedisCacheConstant.LOCK_GID_UPDATE_KEY;
 import static org.cabbage.shortlink.common.constant.RedisCacheConstant.LOCK_GOTO_SHORT_LINK_KEY;
-import static org.cabbage.shortlink.common.constant.ShortLinkConstant.AMAP_REMOTE_URL;
 import static org.cabbage.shortlink.common.constant.ShortLinkConstant.SHORT_LINK_STATS_UIP_KEY;
 import static org.cabbage.shortlink.common.constant.ShortLinkConstant.SHORT_LINK_STATS_UV_KEY;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_ALREADY_EXIST;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_ANALYSE_ERROR;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_CREATE_TIMES_TOO_MANY;
-import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_GET_REMOTE_LOCALE_ERROR;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_GET_WRITE_LOCK_ERROR;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_NOT_EXIST;
 import static org.cabbage.shortlink.project.common.enums.ShortLInkErrorCodeEnum.SHORT_LINK_PROTECT_ERROR;
@@ -132,7 +128,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     private final LinkDeviceStatsMapper linkDeviceStatsMapper;
     private final LinkNetworkStatsMapper linkNetworkStatsMapper;
 
-    private final DelayShortLinkStatsProducer delayShortLinkStatsProducer;
+    private final ShortLinkStatsSaveProducer shortLinkStatsSaveProducer;
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedissonClient redissonClient;
@@ -551,132 +547,11 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
 
     @Override
     public void shortLinkStats(String fullShortUrl, String gid, ShortLinkStatsRecordDTO statsRecord) {
-        fullShortUrl = Optional.ofNullable(fullShortUrl).orElse(statsRecord.getFullShortUrl());
-        RReadWriteLock rwLock = redissonClient.getReadWriteLock(String.format(LOCK_GID_UPDATE_KEY, fullShortUrl));
-        RLock rLock = rwLock.readLock();
-        if (!rLock.tryLock()) {
-            delayShortLinkStatsProducer.send(statsRecord);
-            return;
-        }
-        try {
-            if (StrUtil.isBlank(gid)) {
-                gid = linkGotoService.getOne(new LambdaQueryWrapper<LinkGotoDO>()
-                        .eq(LinkGotoDO::getFullShortUrl, fullShortUrl)).getGid();
-            }
-
-            // 获取日期 不包括时分秒
-            LocalDate today = LocalDate.now();
-            LocalDateTime now = LocalDateTime.now();
-            int hour = now.getHour();
-            int weekday = now.getDayOfWeek().getValue();
-            LinkAccessStatsDO statsDO = LinkAccessStatsDO.builder()
-                    .fullShortUrl(fullShortUrl)
-                    .gid(gid)
-                    .hour(hour)
-                    .weekday(weekday)
-                    .date(today)
-                    .pv(1)
-                    .uv(statsRecord.getUvFlag() ? 1 : 0)
-                    .uip(statsRecord.getUipFlag() ? 1 : 0)
-                    .build();
-            linkAccessStatsMapper.insertOrUpdate(statsDO);
-
-            // 获取地区指标
-            Map<String, Object> localeParamMap = new HashMap<>();
-            localeParamMap.put("key", statsLocaleAMapKey);
-            localeParamMap.put("ip", statsRecord.getRemoteAddr());
-            String localeResultStr = HttpUtil.get(AMAP_REMOTE_URL, localeParamMap);
-            JSONObject localeResultObj = JSON.parseObject(localeResultStr);
-            String infoCode = localeResultObj.getString("infocode");
-            if (StrUtil.isBlank(infoCode) || !StrUtil.equals(infoCode, "10000")) {
-                throw new ServiceException(SHORT_LINK_GET_REMOTE_LOCALE_ERROR);
-            }
-            String provinceStr = localeResultObj.getString("province");
-            boolean unknownFlag = StrUtil.equals(provinceStr, "[]");
-            String actualProvince = unknownFlag ? "unknown" : provinceStr;
-            String actualCity = unknownFlag ? "unknown" : localeResultObj.getString("city");
-
-            LinkLocaleStatsDO localeStatsDO = LinkLocaleStatsDO.builder()
-                    .fullShortUrl(fullShortUrl)
-                    .gid(gid)
-                    .date(today)
-                    .cnt(1)
-                    .province(actualProvince)
-                    .city(actualCity)
-                    .adcode(unknownFlag ? "unknown" : localeResultObj.getString("adcode"))
-                    .country("China")
-                    .build();
-            linkLocaleStatsMapper.insertOrUpdate(localeStatsDO);
-
-            // 监控操作系统
-            LinkOsStatsDO osStatsDO = LinkOsStatsDO.builder()
-                    .fullShortUrl(fullShortUrl)
-                    .gid(gid)
-                    .date(today)
-                    .cnt(1)
-                    .os(statsRecord.getOs())
-                    .build();
-            linkOsStatsMapper.insertOrUpdate(osStatsDO);
-
-            // 监控浏览器
-            LinkBrowserStatsDO browserStatsDO = LinkBrowserStatsDO.builder()
-                    .fullShortUrl(fullShortUrl)
-                    .gid(gid)
-                    .date(today)
-                    .cnt(1)
-                    .browser(statsRecord.getBrowser())
-                    .build();
-            linkBrowserStatsMapper.insertOrUpdate(browserStatsDO);
-
-            // 监控日志
-            LinkAccessLogsDO accessLogsDO = LinkAccessLogsDO.builder()
-                    .user(statsRecord.getUv())
-                    .fullShortUrl(fullShortUrl)
-                    .gid(gid)
-                    .ip(statsRecord.getRemoteAddr())
-                    .os(statsRecord.getOs())
-                    .network(statsRecord.getNetwork())
-                    .device(statsRecord.getDevice())
-                    .locale(StrUtil.join("-", "China", actualProvince, actualCity))
-                    .browser(statsRecord.getBrowser())
-                    .build();
-            linkAccessLogsMapper.insert(accessLogsDO);
-
-            // 监控设备
-            LinkDeviceStatsDO deviceStatsDO = LinkDeviceStatsDO.builder()
-                    .fullShortUrl(fullShortUrl)
-                    .gid(gid)
-                    .date(today)
-                    .cnt(1)
-                    .device(statsRecord.getDevice())
-                    .build();
-            linkDeviceStatsMapper.insertOrUpdate(deviceStatsDO);
-
-            // 监控网络
-            LinkNetworkStatsDO networkStatsDO = LinkNetworkStatsDO.builder()
-                    .fullShortUrl(fullShortUrl)
-                    .gid(gid)
-                    .date(today)
-                    .cnt(1)
-                    .network(statsRecord.getNetwork())
-                    .build();
-            linkNetworkStatsMapper.insertOrUpdate(networkStatsDO);
-
-
-            shortLinkMapper.incrementStats(gid, fullShortUrl, 1, statsRecord.getUvFlag() ? 1 : 0, statsRecord.getUipFlag() ? 1 : 0);
-            linkStatsTodayMapper.insertOrUpdate(LinkStatsTodayDO.builder()
-                    .fullShortUrl(fullShortUrl)
-                    .gid(gid)
-                    .date(today)
-                    .todayPv(1)
-                    .todayUv(statsRecord.getUvFlag() ? 1 : 0)
-                    .todayUip(statsRecord.getUipFlag() ? 1 : 0)
-                    .build());
-        } catch (Exception e) {
-            log.error("短链接访问量统计异常", e);
-        } finally {
-            rLock.unlock();
-        }
+        Map<String, String> prodMap = new HashMap<>();
+        prodMap.put("fullShortUrl", fullShortUrl);
+        prodMap.put("gid", gid);
+        prodMap.put("statsRecord", JSON.toJSONString(statsRecord));
+        shortLinkStatsSaveProducer.send(prodMap);
     }
 
 
