@@ -1,5 +1,6 @@
 package org.cabbage.shortlink.project.controller;
 
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import jakarta.servlet.ServletRequest;
 import jakarta.servlet.ServletResponse;
@@ -14,6 +15,7 @@ import org.cabbage.shortlink.common.dto.resp.ShortLinkCountQueryRespDTO;
 import org.cabbage.shortlink.common.dto.resp.ShortLinkCreateRespDTO;
 import org.cabbage.shortlink.common.dto.resp.ShortLinkPageRespDTO;
 import org.cabbage.shortlink.project.dto.resp.ShortLinkBatchCreateRespDTO;
+import org.cabbage.shortlink.project.hanlder.CustomBlockHandler;
 import org.cabbage.shortlink.project.service.ShortLinkService;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -42,6 +44,11 @@ public class ShortLinkController {
      * @return 响应
      */
     @RequestMapping(value = "/api/short-link/v1/create", method = RequestMethod.POST)
+    @SentinelResource(
+            value = "create_short-link",
+            blockHandler = "createShortLinkBlockHandlerMethod",
+            blockHandlerClass = CustomBlockHandler.class
+    )
     public Result<ShortLinkCreateRespDTO> createShortLink(@RequestBody ShortLinkCreateReqDTO req) {
         return Results.success(shortLinkService.createShortLink(req));
     }
