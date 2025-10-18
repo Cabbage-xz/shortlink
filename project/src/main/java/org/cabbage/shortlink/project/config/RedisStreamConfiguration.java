@@ -42,7 +42,7 @@ public class RedisStreamConfiguration {
         AtomicInteger index = new AtomicInteger();
         int processors = Runtime.getRuntime().availableProcessors();
         return new ThreadPoolExecutor(processors,
-                processors + processors >> 1,
+                processors + (processors >> 1),
                 60,
                 TimeUnit.SECONDS,
                 new LinkedBlockingQueue<>(),
