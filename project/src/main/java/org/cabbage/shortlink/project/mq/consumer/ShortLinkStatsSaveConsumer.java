@@ -27,6 +27,7 @@ import org.cabbage.shortlink.project.dao.mapper.LinkOsStatsMapper;
 import org.cabbage.shortlink.project.dao.mapper.LinkStatsTodayMapper;
 import org.cabbage.shortlink.project.dao.mapper.ShortLinkMapper;
 import org.cabbage.shortlink.project.dto.biz.ShortLinkStatsRecordDTO;
+import org.cabbage.shortlink.project.mq.idempotent.MessageQueueIdempotentHandler;
 import org.cabbage.shortlink.project.mq.producer.DelayShortLinkStatsProducer;
 import org.cabbage.shortlink.project.service.LinkGotoService;
 import org.redisson.api.RLock;
@@ -73,6 +74,7 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
     private final LinkNetworkStatsMapper linkNetworkStatsMapper;
 
     private final DelayShortLinkStatsProducer delayShortLinkStatsProducer;
+    private final MessageQueueIdempotentHandler messageQueueIdempotentHandler;
 
     private final StringRedisTemplate stringRedisTemplate;
     private final RedissonClient redissonClient;
@@ -86,13 +88,25 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
     public void onMessage(MapRecord<String, String, String> message) {
         String stream = message.getStream();
         RecordId id = message.getId();
-        Map<String, String> prodMap = message.getValue();
-        String fullShortUrl = prodMap.get("fullShortUrl");
-        String gid = prodMap.get("gid");
-        ShortLinkStatsRecordDTO statsRecord = JSON.parseObject(prodMap.get("statsRecord"), ShortLinkStatsRecordDTO.class);
-        actualSaveShortLinkStats(fullShortUrl, gid, statsRecord);
-
-        stringRedisTemplate.opsForStream().delete(Objects.requireNonNull(stream), id.getValue());
+        if(!messageQueueIdempotentHandler.isMessageProcessed(id.toString())) {
+            if (messageQueueIdempotentHandler.isMessageAccomplished(id.toString())) {
+                return;
+            }
+            // 到达此处表示消息未被成功消费
+            throw new ServiceException("Message not accomplished");
+        }
+        try {
+            Map<String, String> prodMap = message.getValue();
+            String fullShortUrl = prodMap.get("fullShortUrl");
+            String gid = prodMap.get("gid");
+            ShortLinkStatsRecordDTO statsRecord = JSON.parseObject(prodMap.get("statsRecord"), ShortLinkStatsRecordDTO.class);
+            actualSaveShortLinkStats(fullShortUrl, gid, statsRecord);
+            stringRedisTemplate.opsForStream().delete(Objects.requireNonNull(stream), id.getValue());
+        } catch (Throwable ex) {
+            messageQueueIdempotentHandler.delMessageProcessedKey(id.toString());
+            log.error("Error while processing short-link stats", ex);
+        }
+        messageQueueIdempotentHandler.setMessageAccomplished(id.toString());
     }
 
     public void actualSaveShortLinkStats(String fullShortUrl, String gid, ShortLinkStatsRecordDTO statsRecord) {
