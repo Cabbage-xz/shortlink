@@ -20,7 +20,7 @@
 <mapper namespace="org.cabbage.shortlink.project.dao.mapper.ShortLinkMapper">
 
     <!-- 分页查询短链接 -->
-    <select id="pageLink" parameterType="org.cabbage.shortlink.project.dto.req.ShortLinkPageReqDTO"
+    <select id="pageLink" parameterType="org.cabbage.shortlink.common.dto.req.ShortLinkPageReqDTO"
             resultType="org.cabbage.shortlink.project.dao.entity.ShortLinkDO">
         SELECT t.*,
         COALESCE(s.today_pv, 0) AS todayPv,
