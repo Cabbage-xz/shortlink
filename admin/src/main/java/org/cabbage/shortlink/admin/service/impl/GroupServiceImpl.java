@@ -12,11 +12,11 @@ import org.cabbage.shortlink.admin.dao.mapper.GroupMapper;
 import org.cabbage.shortlink.admin.dto.req.LinkGroupSortReqDTO;
 import org.cabbage.shortlink.admin.dto.req.LinkGroupUpdateReqDTO;
 import org.cabbage.shortlink.admin.dto.resp.LinkGroupRespDTO;
-import org.cabbage.shortlink.admin.remote.ShortLinkRemoteService;
-import org.cabbage.shortlink.common.convention.exception.ClientException;
-import org.cabbage.shortlink.common.dto.resp.ShortLinkCountQueryRespDTO;
+import org.cabbage.shortlink.admin.remote.ShortLinkActualRemoteService;
 import org.cabbage.shortlink.admin.service.interfaces.GroupService;
 import org.cabbage.shortlink.admin.toolkit.RandomGenerator;
+import org.cabbage.shortlink.common.convention.exception.ClientException;
+import org.cabbage.shortlink.common.dto.resp.ShortLinkCountQueryRespDTO;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,14 +41,11 @@ import static org.cabbage.shortlink.common.constant.RedisCacheConstant.LOCK_GROU
 @RequiredArgsConstructor
 public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implements GroupService {
 
+    private final ShortLinkActualRemoteService remoteService;
     private final RedissonClient redissonClient;
 
     @Value("${short-link.group.max-num}")
     private Integer maxNum;
-
-    ShortLinkRemoteService shortLinkRemoteService = new ShortLinkRemoteService() {
-
-    };
 
     /**
      * 新增分组
@@ -97,7 +94,7 @@ public class GroupServiceImpl extends ServiceImpl<GroupMapper, GroupDO> implemen
         List<GroupDO> list = list(new LambdaQueryWrapper<GroupDO>()
                 .eq(GroupDO::getUsername, UserContext.getUsername())
                 .orderByDesc(List.of(GroupDO::getSortOrder, GroupDO::getUpdateTime)));
-        Map<String, Integer> gidCountMap = shortLinkRemoteService.listShortLinkCount(list.stream().map(GroupDO::getGid)
+        Map<String, Integer> gidCountMap = remoteService.listShortLinkCount(list.stream().map(GroupDO::getGid)
                         .collect(Collectors.toList())).getData().stream()
                 .collect(Collectors.toMap(ShortLinkCountQueryRespDTO::getGid, ShortLinkCountQueryRespDTO::getShortLinkCount));
         return list.stream().map(group -> {

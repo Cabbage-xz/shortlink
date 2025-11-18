@@ -1,6 +1,7 @@
 package org.cabbage.shortlink.admin.controller;
 
-import org.cabbage.shortlink.admin.remote.ShortLinkRemoteService;
+import lombok.RequiredArgsConstructor;
+import org.cabbage.shortlink.admin.remote.ShortLinkActualRemoteService;
 import org.cabbage.shortlink.common.convention.result.Result;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -13,11 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
  * url标题控制层
  */
 @RestController
+@RequiredArgsConstructor
 public class UrlTitleController {
 
-    ShortLinkRemoteService shortLinkRemoteService = new ShortLinkRemoteService() {
-
-    };
+    private final ShortLinkActualRemoteService remoteService;
 
     /**
      * 依据url获取网站标题
@@ -26,6 +26,6 @@ public class UrlTitleController {
      */
     @RequestMapping(value = "/api/short-link/admin/v1/title", method = RequestMethod.GET)
     public Result<String> getTitleByUrl(@RequestParam("url") String url) {
-        return shortLinkRemoteService.getTitleByUrl(url);
+        return remoteService.getTitleByUrl(url);
     }
 }

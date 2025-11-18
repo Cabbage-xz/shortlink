@@ -1,17 +1,17 @@
 package org.cabbage.shortlink.admin.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import org.cabbage.shortlink.admin.common.biz.user.UserContext;
 import org.cabbage.shortlink.admin.dao.entity.GroupDO;
-import org.cabbage.shortlink.admin.remote.ShortLinkRemoteService;
-import org.cabbage.shortlink.common.dto.req.ShortLinkRecycleBinPageReqDTO;
-import org.cabbage.shortlink.common.dto.resp.ShortLinkPageRespDTO;
+import org.cabbage.shortlink.admin.remote.ShortLinkActualRemoteService;
 import org.cabbage.shortlink.admin.service.interfaces.GroupService;
 import org.cabbage.shortlink.admin.service.interfaces.RecycleBinService;
 import org.cabbage.shortlink.common.convention.exception.ServiceException;
 import org.cabbage.shortlink.common.convention.result.Result;
+import org.cabbage.shortlink.common.dto.req.ShortLinkRecycleBinPageReqDTO;
+import org.cabbage.shortlink.common.dto.resp.ShortLinkPageRespDTO;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,19 +28,16 @@ import static org.cabbage.shortlink.admin.common.enums.GroupErrorCodeEnum.GROUP_
 public class RecycleBinServiceImpl implements RecycleBinService {
 
     private final GroupService groupService;
-
-    ShortLinkRemoteService shortLinkRemoteService = new ShortLinkRemoteService() {
-
-    };
+    private final ShortLinkActualRemoteService remoteService;
 
     @Override
-    public Result<IPage<ShortLinkPageRespDTO>> pageRecycleBinShortLinks(ShortLinkRecycleBinPageReqDTO req) {
+    public Result<Page<ShortLinkPageRespDTO>> pageRecycleBinShortLinks(ShortLinkRecycleBinPageReqDTO req) {
         List<GroupDO> list = groupService.list(
                 new LambdaQueryWrapper<GroupDO>().eq(GroupDO::getUsername, UserContext.getUsername()));
         if (list.isEmpty()) {
             throw new ServiceException(GROUP_NOT_EXISTS);
         }
         req.setGidList(list.stream().map(GroupDO::getGid).collect(Collectors.toList()));
-        return shortLinkRemoteService.pageRecycleBinShortLinks(req);
+        return remoteService.pageRecycleBinShortLinks(req.getGidList(), req.getCurrent(), req.getSize());
     }
 }

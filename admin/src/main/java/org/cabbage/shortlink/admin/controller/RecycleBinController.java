@@ -1,16 +1,16 @@
 package org.cabbage.shortlink.admin.controller;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
-import org.cabbage.shortlink.admin.remote.ShortLinkRemoteService;
+import org.cabbage.shortlink.admin.remote.ShortLinkActualRemoteService;
+import org.cabbage.shortlink.admin.service.interfaces.RecycleBinService;
+import org.cabbage.shortlink.common.convention.result.Result;
+import org.cabbage.shortlink.common.convention.result.Results;
 import org.cabbage.shortlink.common.dto.req.RecycleBinRecoverReqDTO;
 import org.cabbage.shortlink.common.dto.req.RecycleBinRemoveReqDTO;
 import org.cabbage.shortlink.common.dto.req.RecycleBinSaveReqDTO;
 import org.cabbage.shortlink.common.dto.req.ShortLinkRecycleBinPageReqDTO;
 import org.cabbage.shortlink.common.dto.resp.ShortLinkPageRespDTO;
-import org.cabbage.shortlink.admin.service.interfaces.RecycleBinService;
-import org.cabbage.shortlink.common.convention.result.Result;
-import org.cabbage.shortlink.common.convention.result.Results;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -26,10 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class RecycleBinController {
 
     private final RecycleBinService recycleBinService;
-
-    ShortLinkRemoteService shortLinkRemoteService = new ShortLinkRemoteService() {
-
-    };
+    private final ShortLinkActualRemoteService remoteService;
 
     /**
      * 将短链接保存到回收站
@@ -38,7 +35,7 @@ public class RecycleBinController {
      */
     @RequestMapping(value = "/api/short-link/admin/v1/recycle-bin/save", method = RequestMethod.POST)
     public Result<Void> saveRecycleBin(@RequestBody RecycleBinSaveReqDTO req) {
-        shortLinkRemoteService.saveRecycleBin(req);
+        remoteService.saveRecycleBin(req);
         return Results.success();
     }
 
@@ -48,7 +45,7 @@ public class RecycleBinController {
      * @return 分页结果
      */
     @RequestMapping(value = "/api/short-link/admin/v1/recycle-bin/page", method = RequestMethod.GET)
-    public Result<IPage<ShortLinkPageRespDTO>> pageShortLinks(ShortLinkRecycleBinPageReqDTO req) {
+    public Result<Page<ShortLinkPageRespDTO>> pageShortLinks(ShortLinkRecycleBinPageReqDTO req) {
         return recycleBinService.pageRecycleBinShortLinks(req);
     }
 
@@ -59,7 +56,7 @@ public class RecycleBinController {
      */
     @RequestMapping(value = "/api/short-link/admin/v1/recycle-bin/recover", method = RequestMethod.POST)
     public Result<Void> recoverShortLink(@RequestBody RecycleBinRecoverReqDTO req) {
-        shortLinkRemoteService.recoverShortLink(req);
+        remoteService.recoverShortLink(req);
         return Results.success();
     }
 
@@ -70,7 +67,7 @@ public class RecycleBinController {
      */
     @RequestMapping(value = "/api/short-link/admin/v1/recycle-bin/remove", method = RequestMethod.POST)
     public Result<Void> removeShortLink(@RequestBody RecycleBinRemoveReqDTO req) {
-        shortLinkRemoteService.removeShortLink(req);
+        remoteService.removeShortLink(req);
         return Results.success();
     }
 }

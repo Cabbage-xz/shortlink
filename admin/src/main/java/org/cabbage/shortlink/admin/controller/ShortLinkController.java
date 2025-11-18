@@ -1,10 +1,11 @@
 package org.cabbage.shortlink.admin.controller;
 
-import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.cabbage.shortlink.admin.remote.ShortLinkRemoteService;
+import org.cabbage.shortlink.admin.remote.ShortLinkActualRemoteService;
 import org.cabbage.shortlink.admin.remote.dto.req.ShortLinkBaseInfoRespDTO;
 import org.cabbage.shortlink.admin.remote.dto.resp.ShortLinkBatchCreateRespDTO;
 import org.cabbage.shortlink.admin.toolkit.EasyExcelWebUtil;
@@ -32,11 +33,10 @@ import java.util.List;
  */
 @RestController
 @Slf4j
+@RequiredArgsConstructor
 public class ShortLinkController {
 
-    ShortLinkRemoteService shortLinkRemoteService = new ShortLinkRemoteService() {
-
-    };
+    private final ShortLinkActualRemoteService remoteService;
 
     /**
      * 创建短链接
@@ -45,7 +45,7 @@ public class ShortLinkController {
      */
     @RequestMapping(value = "/api/short-link/admin/v1/create", method = RequestMethod.POST)
     public Result<ShortLinkCreateRespDTO> createShortLink(@RequestBody ShortLinkCreateReqDTO req) {
-        return shortLinkRemoteService.createShortLink(req);
+        return remoteService.createShortLink(req);
     }
 
     /**
@@ -54,7 +54,7 @@ public class ShortLinkController {
     @SneakyThrows
     @RequestMapping(value = "/api/short-link/admin/v1/create/batch", method = RequestMethod.POST)
     public void batchCreateShortLink(@RequestBody ShortLinkBatchCreateReqDTO requestParam, HttpServletResponse response) {
-        Result<ShortLinkBatchCreateRespDTO> shortLinkBatchCreateRespDTOResult = shortLinkRemoteService.batchCreateShortLink(requestParam);
+        Result<ShortLinkBatchCreateRespDTO> shortLinkBatchCreateRespDTOResult = remoteService.batchCreateShortLink(requestParam);
         if (shortLinkBatchCreateRespDTOResult.isSuccess()) {
             List<ShortLinkBaseInfoRespDTO> baseLinkInfos = shortLinkBatchCreateRespDTOResult.getData().getBaseLinkInfos();
             EasyExcelWebUtil.write(response, "批量创建短链接-SaaS短链接系统", ShortLinkBaseInfoRespDTO.class, baseLinkInfos);
@@ -67,7 +67,7 @@ public class ShortLinkController {
      */
     @RequestMapping(value = "/api/short-link/admin/v1/update", method = RequestMethod.POST)
     public Result<Void> updateShortLink(@RequestBody ShortLinkUpdateReqDTO req) {
-        shortLinkRemoteService.updateShortLink(req);
+        remoteService.updateShortLink(req);
         return Results.success();
     }
 
@@ -77,8 +77,8 @@ public class ShortLinkController {
      * @return 分页结果
      */
     @RequestMapping(value = "/api/short-link/admin/v1/page", method = RequestMethod.GET)
-    public Result<IPage<ShortLinkPageRespDTO>> pageShortLinks(ShortLinkPageReqDTO req) {
-        return shortLinkRemoteService.pageShortLinks(req);
+    public Result<Page<ShortLinkPageRespDTO>> pageShortLinks(ShortLinkPageReqDTO req) {
+        return remoteService.pageShortLinks(req.getGid(), req.getOrderTag(), req.getCurrent(), req.getSize());
     }
 
     /**
@@ -88,7 +88,7 @@ public class ShortLinkController {
      */
     @RequestMapping(value = "/api/short-link/admin/v1/count", method = RequestMethod.GET)
     public Result<List<ShortLinkCountQueryRespDTO>> listShortLinkCount(@RequestParam("gIds") List<String> gIds) {
-        return shortLinkRemoteService.listShortLinkCount(gIds);
+        return remoteService.listShortLinkCount(gIds);
     }
 
 }
