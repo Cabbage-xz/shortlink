@@ -486,8 +486,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         // 查询缓存是否包含原始链接
         String originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
         if (StrUtil.isNotBlank(originalUrl)) {
-            ShortLinkStatsRecordDTO statsRecord = buildLinkStatsRecordAndSetUser(fullShortUrl, req, res);
-            shortLinkStats(fullShortUrl, null, statsRecord);
+            shortLinkStats(buildLinkStatsRecordAndSetUser(fullShortUrl, req, res));
 
             ((HttpServletResponse) res).sendRedirect(originalUrl);
             return;
@@ -509,8 +508,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         try {
             originalUrl = stringRedisTemplate.opsForValue().get(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl));
             if (StrUtil.isNotBlank(originalUrl)) {
-                ShortLinkStatsRecordDTO statsRecord = buildLinkStatsRecordAndSetUser(fullShortUrl, req, res);
-                shortLinkStats(fullShortUrl, null, statsRecord);
+                shortLinkStats(buildLinkStatsRecordAndSetUser(fullShortUrl, req, res));
                 ((HttpServletResponse) res).sendRedirect(originalUrl);
                 return;
             }
@@ -534,8 +532,7 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
             }
             stringRedisTemplate.opsForValue().set(String.format(GOTO_SHORT_LINK_KEY, fullShortUrl),
                     shortLinkDO.getOriginUrl(), LinkUtil.getLinkCacheValidTime(shortLinkDO.getValidDate()), TimeUnit.MILLISECONDS);
-            ShortLinkStatsRecordDTO statsRecord = buildLinkStatsRecordAndSetUser(fullShortUrl, req, res);
-            shortLinkStats(fullShortUrl, shortLinkDO.getGid(), statsRecord);
+            shortLinkStats(buildLinkStatsRecordAndSetUser(fullShortUrl, req, res));
             ((HttpServletResponse) res).sendRedirect(shortLinkDO.getOriginUrl());
         } finally {
             lock.unlock();
@@ -544,10 +541,8 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
     }
 
     @Override
-    public void shortLinkStats(String fullShortUrl, String gid, ShortLinkStatsRecordDTO statsRecord) {
+    public void shortLinkStats(ShortLinkStatsRecordDTO statsRecord) {
         Map<String, String> prodMap = new HashMap<>();
-        prodMap.put("fullShortUrl", fullShortUrl);
-        prodMap.put("gid", gid);
         prodMap.put("statsRecord", JSON.toJSONString(statsRecord));
         shortLinkStatsSaveProducer.send(prodMap);
     }

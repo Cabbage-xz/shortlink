@@ -45,7 +45,6 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 
 import static org.cabbage.shortlink.common.constant.RedisCacheConstant.LOCK_GID_UPDATE_KEY;
 import static org.cabbage.shortlink.common.constant.ShortLinkConstant.AMAP_REMOTE_URL;
@@ -97,10 +96,8 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
         }
         try {
             Map<String, String> prodMap = message.getValue();
-            String fullShortUrl = prodMap.get("fullShortUrl");
-            String gid = prodMap.get("gid");
             ShortLinkStatsRecordDTO statsRecord = JSON.parseObject(prodMap.get("statsRecord"), ShortLinkStatsRecordDTO.class);
-            actualSaveShortLinkStats(fullShortUrl, gid, statsRecord);
+            actualSaveShortLinkStats(statsRecord);
             stringRedisTemplate.opsForStream().delete(Objects.requireNonNull(stream), id.getValue());
         } catch (Throwable ex) {
             messageQueueIdempotentHandler.delMessageProcessedKey(id.toString());
@@ -109,15 +106,15 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
         messageQueueIdempotentHandler.setMessageAccomplished(id.toString());
     }
 
-    public void actualSaveShortLinkStats(String fullShortUrl, String gid, ShortLinkStatsRecordDTO statsRecord) {
-        fullShortUrl = Optional.ofNullable(fullShortUrl).orElse(statsRecord.getFullShortUrl());
+    public void actualSaveShortLinkStats(ShortLinkStatsRecordDTO statsRecord) {
+        String fullShortUrl = statsRecord.getFullShortUrl();
         RReadWriteLock rwLock = redissonClient.getReadWriteLock(String.format(LOCK_GID_UPDATE_KEY, fullShortUrl));
         RLock rLock = rwLock.readLock();
         // 阻塞等更新完成
         rLock.lock();
         try {
             // 获取最新的gid
-            gid = linkGotoService.getOne(new LambdaQueryWrapper<LinkGotoDO>()
+            String gid = linkGotoService.getOne(new LambdaQueryWrapper<LinkGotoDO>()
                     .eq(LinkGotoDO::getFullShortUrl, fullShortUrl)).getGid();
 
             // 获取日期 不包括时分秒

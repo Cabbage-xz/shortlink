@@ -51,7 +51,7 @@ public class DelayShortLinkStatsConsumer implements InitializingBean {
                                     throw new ServiceException("Message processing failed");
                                 }
                                 try {
-                                    shortLinkService.shortLinkStats(null, null, statsRecord);
+                                    shortLinkService.shortLinkStats(statsRecord);
                                 } catch (Throwable ex) {
                                     messageQueueIdempotentHandler.delMessageProcessedKey(statsRecord.getMessageKeys());
                                 }
