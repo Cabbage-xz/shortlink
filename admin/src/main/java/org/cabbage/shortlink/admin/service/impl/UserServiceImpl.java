@@ -85,16 +85,15 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             throw new ClientException(USER_NAME_EXIST);
         }
         RLock lock = redissonClient.getLock(LOCK_USER_REGISTER_KEY + req.getUsername());
-        try {
-            if (lock.tryLock()) {
-                if (!save(BeanUtil.toBean(req, User.class))) {
-                    throw new ClientException(USER_SAVE_ERROR);
-                }
-                userRegisterCachePenetrationBloomFilter.add(req.getUsername());
-                groupService.saveGroup(req.getUsername(), "default");
-                return;
-            }
+        if (!lock.tryLock()) {
             throw new ClientException(USER_NAME_EXIST);
+        }
+        try {
+            if (!save(BeanUtil.toBean(req, User.class))) {
+                throw new ClientException(USER_SAVE_ERROR);
+            }
+            userRegisterCachePenetrationBloomFilter.add(req.getUsername());
+            groupService.saveGroup(req.getUsername(), "default");
         } finally {
             lock.unlock();
         }
