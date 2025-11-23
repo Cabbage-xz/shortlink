@@ -113,15 +113,12 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
         fullShortUrl = Optional.ofNullable(fullShortUrl).orElse(statsRecord.getFullShortUrl());
         RReadWriteLock rwLock = redissonClient.getReadWriteLock(String.format(LOCK_GID_UPDATE_KEY, fullShortUrl));
         RLock rLock = rwLock.readLock();
-        if (!rLock.tryLock()) {
-            delayShortLinkStatsProducer.send(statsRecord);
-            return;
-        }
+        // 阻塞等更新完成
+        rLock.lock();
         try {
-            if (StrUtil.isBlank(gid)) {
-                gid = linkGotoService.getOne(new LambdaQueryWrapper<LinkGotoDO>()
-                        .eq(LinkGotoDO::getFullShortUrl, fullShortUrl)).getGid();
-            }
+            // 获取最新的gid
+            gid = linkGotoService.getOne(new LambdaQueryWrapper<LinkGotoDO>()
+                    .eq(LinkGotoDO::getFullShortUrl, fullShortUrl)).getGid();
 
             // 获取日期 不包括时分秒
             LocalDate today = LocalDate.now();

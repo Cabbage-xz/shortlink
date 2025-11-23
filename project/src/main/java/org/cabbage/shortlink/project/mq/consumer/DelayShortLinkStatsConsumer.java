@@ -22,6 +22,7 @@ import static org.cabbage.shortlink.common.constant.RedisCacheConstant.DELAY_QUE
  */
 @Component
 @RequiredArgsConstructor
+@Deprecated
 public class DelayShortLinkStatsConsumer implements InitializingBean {
 
     private final RedissonClient redissonClient;
