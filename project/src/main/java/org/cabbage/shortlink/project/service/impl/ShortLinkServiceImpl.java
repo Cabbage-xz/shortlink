@@ -420,7 +420,8 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
         }
 
         if (Objects.equals(req.getValidDateType(), one.getValidDateType()) &&
-                Objects.equals(req.getValidDate(), one.getValidDate())) {
+                Objects.equals(req.getValidDate(), one.getValidDate()) &&
+                Objects.equals(req.getOriginUrl(), one.getOriginUrl())) {
             return;
         }
         stringRedisTemplate.delete(String.format(GOTO_SHORT_LINK_KEY, req.getFullShortUrl()));
