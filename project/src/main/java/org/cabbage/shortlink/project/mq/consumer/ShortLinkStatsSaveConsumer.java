@@ -102,6 +102,7 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
         } catch (Throwable ex) {
             messageQueueIdempotentHandler.delMessageProcessedKey(id.toString());
             log.error("Error while processing short-link stats", ex);
+            throw ex;
         }
         messageQueueIdempotentHandler.setMessageAccomplished(id.toString());
     }
