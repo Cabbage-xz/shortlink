@@ -226,8 +226,6 @@ public class ShortLinkStatsSaveConsumer implements StreamListener<String, MapRec
                     .todayUv(statsRecord.getUvFlag() ? 1 : 0)
                     .todayUip(statsRecord.getUipFlag() ? 1 : 0)
                     .build());
-        } catch (Exception e) {
-            log.error("短链接访问量统计异常", e);
         } finally {
             rLock.unlock();
         }
