@@ -513,6 +513,11 @@ public class ShortLinkServiceImpl extends ServiceImpl<ShortLinkMapper, ShortLink
                 ((HttpServletResponse) res).sendRedirect(originalUrl);
                 return;
             }
+            String gotoIsNullShortLink = stringRedisTemplate.opsForValue().get(String.format(GOTO_IS_NULL_SHORT_LINK_KEY, fullShortUrl));
+            if (StrUtil.isNotBlank(gotoIsNullShortLink)) {
+                ((HttpServletResponse) res).sendRedirect("/page/notfound");
+                return;
+            }
             LinkGotoDO one = linkGotoService.getOne(new LambdaQueryWrapper<LinkGotoDO>()
                     .eq(LinkGotoDO::getFullShortUrl, fullShortUrl));
             if (one == null) {
